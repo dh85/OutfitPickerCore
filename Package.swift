@@ -1,34 +1,43 @@
-// swift-tools-version: 6.2
+// swift-tools-version: 5.9
+// The swift-tools-version declares the minimum version of Swift required to build this package.
+
 import PackageDescription
 
 let package = Package(
-    name: "OutfitPickerCore",
-    platforms: [.macOS(.v15)],
+    name: "OutfitPicker",
+    platforms: [
+        .iOS(.v13),
+        .macOS(.v10_15),
+        .tvOS(.v13),
+        .watchOS(.v6)
+    ],
     products: [
-        .library(name: "OutfitPickerCore", targets: ["OutfitPickerCore"])
+        // Products define the executables and libraries a package produces, making them visible to other packages.
+        .library(
+            name: "OutfitPickerCore",
+            targets: ["OutfitPickerCore"]
+        ),
+    ],
+    dependencies: [
+        // Dependencies declare other packages that this package depends on.
     ],
     targets: [
-        // Library
+        // Targets are the basic building blocks of a package, defining a module or a test suite.
+        // Targets can depend on other targets in this package and products from dependencies.
         .target(
             name: "OutfitPickerCore",
-            path: "Sources/OutfitPickerCore"
+            dependencies: []
         ),
-
-        // Test Support — regular target (not testTarget)
         .target(
             name: "OutfitPickerTestSupport",
-            dependencies: ["OutfitPickerCore"],
-            path: "Sources/OutfitPickerTestSupport"   // or "Tests/OutfitPickerTestSupport" if you didn't move it
+            dependencies: ["OutfitPickerCore"]
         ),
-
-        // Tests
         .testTarget(
             name: "OutfitPickerCoreTests",
             dependencies: [
                 "OutfitPickerCore",
                 "OutfitPickerTestSupport"
-            ],
-            path: "Tests/OutfitPickerCoreTests"
+            ]
         ),
     ]
 )
