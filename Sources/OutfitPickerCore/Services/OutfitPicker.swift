@@ -1,53 +1,282 @@
 import Foundation
 
-/// Core protocol defining the outfit picker functionality.
+/// Manages outfit selection and rotation across categories.
+///
+/// OutfitPicker provides intelligent outfit selection with automatic rotation tracking,
+/// ensuring you don't repeat outfits until all have been worn. Perfect for daily outfit
+/// selection, wardrobe management, and style rotation.
+///
+/// ## Basic Usage
+/// ```swift
+/// let picker = OutfitPicker(configService: configService, fileManager: FileManager.default)
+///
+/// // Get a random outfit from "casual" category
+/// if let outfit = try await picker.showRandomOutfit(from: "casual") {
+///     print("Wear: \(outfit.fileName)")
+///     try await picker.wearOutfit(outfit)
+/// }
+/// ```
 public protocol OutfitPickerProtocol: Sendable {
-    /// Shows a random unworn outfit from the specified category.
+    /// Selects a random unworn outfit from the specified category.
+    ///
+    /// Automatically tracks worn outfits and resets rotation when all outfits
+    /// in the category have been worn. Returns `nil` if category is empty.
+    ///
+    /// - Parameter categoryName: Name of the category to select from
+    /// - Returns: Random unworn outfit, or `nil` if category has no outfits
+    /// - Throws: `OutfitPickerError.invalidInput` if category name is empty
+    /// - Throws: `OutfitPickerError.categoryNotFound` if category doesn't exist
+    ///
+    /// ## Example
+    /// ```swift
+    /// if let outfit = try await picker.showRandomOutfit(from: "work") {
+    ///     print("Today's work outfit: \(outfit.fileName)")
+    /// }
+    /// ```
     func showRandomOutfit(from categoryName: String) async throws -> OutfitReference?
 
-    /// Shows a random unworn outfit from any available category.
+    /// Selects a random unworn outfit from any available category.
+    ///
+    /// Useful for spontaneous outfit selection when you want variety across
+    /// your entire wardrobe. Excludes user-excluded categories.
+    ///
+    /// - Returns: Random unworn outfit from any category, or `nil` if no outfits available
+    /// - Throws: `OutfitPickerError.noOutfitsAvailable` if no categories have outfits
+    ///
+    /// ## Example
+    /// ```swift
+    /// if let outfit = try await picker.showRandomOutfitAcrossCategories() {
+    ///     print("Surprise outfit from \(outfit.category.name): \(outfit.fileName)")
+    /// }
+    /// ```
     func showRandomOutfitAcrossCategories() async throws -> OutfitReference?
 
-    /// Marks an outfit as worn by adding it to the category's worn list.
+    /// Marks an outfit as worn, adding it to the rotation tracking.
+    ///
+    /// Call this after wearing an outfit to ensure it won't be selected again
+    /// until the category rotation completes. Safe to call multiple times.
+    ///
+    /// - Parameter outfit: The outfit that was worn
+    /// - Throws: `OutfitPickerError.invalidInput` if outfit data is invalid
+    /// - Throws: `OutfitPickerError.noOutfitsAvailable` if outfit doesn't exist
+    ///
+    /// ## Example
+    /// ```swift
+    /// let outfit = try await picker.showRandomOutfit(from: "casual")
+    /// // ... wear the outfit ...
+    /// try await picker.wearOutfit(outfit)
+    /// ```
     func wearOutfit(_ outfit: OutfitReference) async throws
 
-    /// Retrieves detailed information about all categories including their states.
+    /// Retrieves detailed information about all categories and their states.
+    ///
+    /// Provides comprehensive category analysis including outfit counts,
+    /// availability status, and exclusion reasons. Useful for UI displays
+    /// and wardrobe management.
+    ///
+    /// - Returns: Array of category information sorted by name
+    /// - Throws: `OutfitPickerError.fileSystemError` if filesystem access fails
+    ///
+    /// ## Example
+    /// ```swift
+    /// let categories = try await picker.getCategoryInfo()
+    /// for info in categories {
+    ///     print("\(info.category.name): \(info.state)")
+    /// }
+    /// ```
     func getCategoryInfo() async throws -> [CategoryInfo]
 
-    /// Retrieves references to all non-excluded categories.
+    /// Retrieves references to all categories that have outfits.
+    ///
+    /// Returns only categories with available outfits, excluding empty
+    /// or user-excluded categories. Perfect for populating selection lists.
+    ///
+    /// - Returns: Array of category references sorted by name
+    /// - Throws: `OutfitPickerError.fileSystemError` if filesystem access fails
+    ///
+    /// ## Example
+    /// ```swift
+    /// let categories = try await picker.getCategories()
+    /// let categoryNames = categories.map { $0.name }
+    /// print("Available categories: \(categoryNames.joined(separator: ", "))")
+    /// ```
     func getCategories() async throws -> [CategoryReference]
 
-    /// Gets the count of available (unworn) outfits in a category.
+    /// Returns the count of unworn outfits in a category.
+    ///
+    /// Useful for displaying progress or determining if new outfits are needed.
+    /// Returns total count if rotation just completed.
+    ///
+    /// - Parameter categoryName: Name of the category to check
+    /// - Returns: Number of available (unworn) outfits
+    /// - Throws: `OutfitPickerError.invalidInput` if category name is empty
+    /// - Throws: `OutfitPickerError.categoryNotFound` if category doesn't exist
+    ///
+    /// ## Example
+    /// ```swift
+    /// let available = try await picker.getAvailableCount(for: "formal")
+    /// print("\(available) formal outfits remaining")
+    /// ```
     func getAvailableCount(for categoryName: String) async throws -> Int
 
-    /// Resets the worn outfit list for a specific category.
+    /// Resets the worn outfit tracking for a specific category.
+    ///
+    /// Clears the worn list, making all outfits in the category available
+    /// for selection again. Useful for starting fresh or manual resets.
+    ///
+    /// - Parameter categoryName: Name of the category to reset
+    /// - Throws: `OutfitPickerError.invalidInput` if category name is empty
+    ///
+    /// ## Example
+    /// ```swift
+    /// try await picker.resetCategory("summer")
+    /// print("Summer outfits reset - all available again")
+    /// ```
     func resetCategory(_ categoryName: String) async throws
 
-    /// Resets the worn outfit lists for all categories.
+    /// Resets worn outfit tracking for all categories.
+    ///
+    /// Clears all rotation history, making every outfit available for
+    /// selection. Use when starting a new season or major wardrobe refresh.
+    ///
+    /// - Throws: `OutfitPickerError.cacheError` if reset fails
+    ///
+    /// ## Example
+    /// ```swift
+    /// try await picker.resetAllCategories()
+    /// print("All outfit rotations reset")
+    /// ```
     func resetAllCategories() async throws
 
     /// Partially resets a category to have only the specified number of worn outfits.
+    ///
+    /// Useful for fine-tuning rotation state or recovering from tracking issues.
+    /// Keeps the first N worn outfits and makes the rest available.
+    ///
+    /// - Parameters:
+    ///   - categoryName: Name of the category to partially reset
+    ///   - wornCount: Number of outfits to keep as worn (rest become available)
+    /// - Throws: `OutfitPickerError.invalidInput` if parameters are invalid
+    ///
+    /// ## Example
+    /// ```swift
+    /// // Keep only 3 outfits as worn, make rest available
+    /// try await picker.partialReset(categoryName: "work", wornCount: 3)
+    /// ```
     func partialReset(categoryName: String, wornCount: Int) async throws
 
     /// Retrieves all outfit references from a specific category.
+    ///
+    /// Returns complete outfit inventory for a category, regardless of
+    /// worn status. Useful for wardrobe audits and management interfaces.
+    ///
+    /// - Parameter categoryName: Name of the category to list
+    /// - Returns: Array of all outfits in the category, sorted by filename
+    /// - Throws: `OutfitPickerError.categoryNotFound` if category doesn't exist
+    ///
+    /// ## Example
+    /// ```swift
+    /// let outfits = try await picker.showAllOutfits(from: "casual")
+    /// print("Casual wardrobe (\(outfits.count) items):")
+    /// outfits.forEach { print("- \($0.fileName)") }
+    /// ```
     func showAllOutfits(from categoryName: String) async throws -> [OutfitReference]
 
-    /// Detects changes in the filesystem compared to the stored configuration.
+    /// Detects changes in the filesystem compared to stored configuration.
+    ///
+    /// Scans for new categories, deleted categories, and file changes.
+    /// Use before `updateConfig` to synchronize with filesystem state.
+    ///
+    /// - Returns: Summary of detected changes
+    /// - Throws: `OutfitPickerError.fileSystemError` if filesystem scan fails
+    ///
+    /// ## Example
+    /// ```swift
+    /// let changes = try await picker.detectChanges()
+    /// if !changes.newCategories.isEmpty {
+    ///     print("New categories found: \(changes.newCategories.joined(separator: ", "))")
+    /// }
+    /// ```
     func detectChanges() async throws -> CategoryChanges
 
-    /// Updates the configuration with detected changes.
+    /// Updates the configuration with detected filesystem changes.
+    ///
+    /// Synchronizes the stored configuration with current filesystem state.
+    /// Automatically clears cache for deleted categories.
+    ///
+    /// - Parameter changes: Changes to apply (from `detectChanges`)
+    /// - Throws: `OutfitPickerError.invalidConfiguration` if update fails
+    ///
+    /// ## Example
+    /// ```swift
+    /// let changes = try await picker.detectChanges()
+    /// try await picker.updateConfig(with: changes)
+    /// print("Configuration synchronized")
+    /// ```
     func updateConfig(with changes: CategoryChanges) async throws
 
-    /// Marks multiple outfits as worn in a single operation.
+    /// Marks multiple outfits as worn in a single efficient operation.
+    ///
+    /// Batch operation for marking several outfits as worn. More efficient
+    /// than calling `wearOutfit` multiple times. All outfits must exist.
+    ///
+    /// - Parameter outfits: Array of outfits to mark as worn
+    /// - Throws: `OutfitPickerError.invalidInput` if any outfit data is invalid
+    /// - Throws: `OutfitPickerError.noOutfitsAvailable` if any outfit doesn't exist
+    ///
+    /// ## Example
+    /// ```swift
+    /// let outfitsWorn = [outfit1, outfit2, outfit3]
+    /// try await picker.wearOutfits(outfitsWorn)
+    /// print("Marked \(outfitsWorn.count) outfits as worn")
+    /// ```
     func wearOutfits(_ outfits: [OutfitReference]) async throws
 
-    /// Resets multiple categories in a single operation.
+    /// Resets multiple categories in a single efficient operation.
+    ///
+    /// Batch operation for resetting several categories. More efficient
+    /// than calling `resetCategory` multiple times.
+    ///
+    /// - Parameter categoryNames: Array of category names to reset
+    /// - Throws: `OutfitPickerError.invalidInput` if any category name is invalid
+    ///
+    /// ## Example
+    /// ```swift
+    /// try await picker.resetCategories(["summer", "vacation", "beach"])
+    /// print("Summer categories reset")
+    /// ```
     func resetCategories(_ categoryNames: [String]) async throws
     
     /// Searches for outfits matching the given pattern.
+    ///
+    /// Performs case-insensitive search across all outfit filenames in
+    /// available categories. Excludes user-excluded categories.
+    ///
+    /// - Parameter pattern: Search pattern to match against outfit names
+    /// - Returns: Array of matching outfits, sorted by filename
+    /// - Throws: `OutfitPickerError.invalidInput` if pattern is empty
+    ///
+    /// ## Example
+    /// ```swift
+    /// let blueOutfits = try await picker.searchOutfits(pattern: "blue")
+    /// print("Found \(blueOutfits.count) blue outfits")
+    /// ```
     func searchOutfits(pattern: String) async throws -> [OutfitReference]
     
     /// Filters categories by name pattern.
+    ///
+    /// Performs case-insensitive search across category names.
+    /// Only returns categories that have outfits.
+    ///
+    /// - Parameter pattern: Pattern to match against category names
+    /// - Returns: Array of matching categories, sorted by name
+    /// - Throws: `OutfitPickerError.invalidInput` if pattern is empty
+    ///
+    /// ## Example
+    /// ```swift
+    /// let workCategories = try await picker.filterCategories(pattern: "work")
+    /// print("Work-related categories: \(workCategories.map { $0.name })")
+    /// ```
     func filterCategories(pattern: String) async throws -> [CategoryReference]
 }
 
@@ -81,6 +310,23 @@ public protocol FileManagerProtocol: Sendable {
 extension FileManager: FileManagerProtocol {}
 
 /// Main implementation of the outfit picker functionality.
+///
+/// OutfitPicker manages outfit selection with intelligent rotation tracking.
+/// It automatically prevents outfit repetition until all outfits in a category
+/// have been worn, then resets for a fresh rotation cycle.
+///
+/// ## Thread Safety
+/// OutfitPicker is thread-safe and can be used from multiple concurrent contexts.
+/// All operations are atomic and properly synchronized.
+///
+/// ## Error Handling
+/// All methods throw `OutfitPickerError` for consistent error handling:
+/// - `configurationNotFound`: No configuration file exists
+/// - `categoryNotFound`: Requested category doesn't exist
+/// - `noOutfitsAvailable`: No outfit files found
+/// - `invalidInput`: Invalid parameters provided
+/// - `fileSystemError`: Filesystem access issues
+/// - `cacheError`: Cache corruption or access issues
 public struct OutfitPicker: OutfitPickerProtocol, @unchecked Sendable {
     private let configService: ConfigServiceProtocol
     private let cacheService: CacheServiceProtocol
