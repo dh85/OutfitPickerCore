@@ -729,6 +729,42 @@ public struct OutfitPicker: OutfitPickerProtocol, @unchecked Sendable {
         }
     }
 
+    // MARK: - Convenience Methods
+    
+    /// Checks if a specific outfit exists in a category.
+    public func outfitExists(_ fileName: String, in categoryName: String) async throws -> Bool {
+        let outfits = try await showAllOutfits(from: categoryName)
+        return outfits.contains { $0.fileName == fileName }
+    }
+    
+    /// Checks if a specific outfit has been worn.
+    public func isOutfitWorn(_ fileName: String, in categoryName: String) async throws -> Bool {
+        do {
+            let cache = try cacheService.load()
+            let categoryCache = cache.categories[categoryName]
+            return categoryCache?.wornOutfits.contains(fileName) ?? false
+        } catch {
+            throw OutfitPickerError.from(error)
+        }
+    }
+    
+    /// Gets a specific outfit reference by name.
+    public func getOutfit(_ fileName: String, from categoryName: String) async throws -> OutfitReference? {
+        let outfits = try await showAllOutfits(from: categoryName)
+        return outfits.first { $0.fileName == fileName }
+    }
+    
+    /// Gets the rotation progress for a category (0.0 to 1.0).
+    public func getRotationProgress(for categoryName: String) async throws -> Double {
+        let available = try await getAvailableCount(for: categoryName)
+        let total = try await showAllOutfits(from: categoryName).count
+        
+        guard total > 0 else { return 1.0 }
+        
+        let worn = total - available
+        return Double(worn) / Double(total)
+    }
+
     // MARK: - Private Helper Methods
 
     private func getAvatarFiles(in directoryPath: String) throws -> [FileEntry] {
