@@ -25,9 +25,12 @@ struct OutfitReferenceTests {
 
     @Test("description and equatable behavior")
     func descriptionAndEquatable() {
+        let category = CategoryReference(name: "casual", path: "/test/path")
+        #expect(category.description == "casual")
+        
         let outfit = OutfitReference(
             fileName: "shirt.avatar",
-            category: .init(name: "casual", path: "/test/path")
+            category: category
         )
         #expect(outfit.description == "shirt.avatar in casual")
 

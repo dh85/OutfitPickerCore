@@ -283,6 +283,59 @@ struct AsyncOutfitPickerTests {
         #expect(env.cache.saved.first?.categories.isEmpty == true)
     }
 
+    @Test("async partialReset resets partial cache")
+    func asyncPartialReset_resetsPartial() async throws {
+        let existingCache = OutfitCache(categories: [
+            "Casual": CategoryCache(
+                wornOutfits: ["outfit1.avatar", "outfit2.avatar"],
+                totalOutfits: 2
+            )
+        ])
+
+        let env = try makeOutfitPickerSUT(
+            root: "/Users/test/Outfits",
+            cache: existingCache,
+            fileSystem: [
+                URL(
+                    filePath: "/Users/test/Outfits",
+                    directoryHint: .isDirectory
+                ): [
+                    URL(
+                        filePath: "/Users/test/Outfits/Casual",
+                        directoryHint: .isDirectory
+                    )
+                ],
+                URL(
+                    filePath: "/Users/test/Outfits/Casual",
+                    directoryHint: .isDirectory
+                ): [
+                    URL(
+                        filePath: "/Users/test/Outfits/Casual/outfit1.avatar",
+                        directoryHint: .notDirectory
+                    ),
+                    URL(
+                        filePath: "/Users/test/Outfits/Casual/outfit2.avatar",
+                        directoryHint: .notDirectory
+                    )
+                ],
+            ],
+            directories: [
+                URL(
+                    filePath: "/Users/test/Outfits",
+                    directoryHint: .isDirectory
+                ),
+                URL(
+                    filePath: "/Users/test/Outfits/Casual",
+                    directoryHint: .isDirectory
+                ),
+            ]
+        )
+
+        try await env.sut.partialReset(categoryName: "Casual", wornCount: 1)
+
+        #expect(env.cache.saved.count == 1)
+    }
+
     @Test("async showAllOutfits returns all outfits")
     func asyncShowAllOutfits_returnsAll() async throws {
         let env = try makeOutfitPickerSUT(
@@ -331,6 +384,90 @@ struct AsyncOutfitPickerTests {
                 "outfit1.avatar", "outfit2.avatar",
             ]
         )
+    }
+
+    @Test("async getCategoryInfo returns category information")
+    func asyncGetCategoryInfo_returnsInfo() async throws {
+        let env = try makeOutfitPickerSUT(
+            root: "/Users/test/Outfits",
+            fileSystem: [
+                URL(
+                    filePath: "/Users/test/Outfits",
+                    directoryHint: .isDirectory
+                ): [
+                    URL(
+                        filePath: "/Users/test/Outfits/Casual",
+                        directoryHint: .isDirectory
+                    )
+                ],
+                URL(
+                    filePath: "/Users/test/Outfits/Casual",
+                    directoryHint: .isDirectory
+                ): [
+                    URL(
+                        filePath: "/Users/test/Outfits/Casual/outfit1.avatar",
+                        directoryHint: .notDirectory
+                    )
+                ],
+            ],
+            directories: [
+                URL(
+                    filePath: "/Users/test/Outfits",
+                    directoryHint: .isDirectory
+                ),
+                URL(
+                    filePath: "/Users/test/Outfits/Casual",
+                    directoryHint: .isDirectory
+                ),
+            ]
+        )
+
+        let categoryInfos = try await env.sut.getCategoryInfo()
+
+        #expect(categoryInfos.count == 1)
+        #expect(categoryInfos.first?.category.name == "Casual")
+    }
+
+    @Test("async getCategories returns category references")
+    func asyncGetCategories_returnsCategories() async throws {
+        let env = try makeOutfitPickerSUT(
+            root: "/Users/test/Outfits",
+            fileSystem: [
+                URL(
+                    filePath: "/Users/test/Outfits",
+                    directoryHint: .isDirectory
+                ): [
+                    URL(
+                        filePath: "/Users/test/Outfits/Casual",
+                        directoryHint: .isDirectory
+                    )
+                ],
+                URL(
+                    filePath: "/Users/test/Outfits/Casual",
+                    directoryHint: .isDirectory
+                ): [
+                    URL(
+                        filePath: "/Users/test/Outfits/Casual/outfit1.avatar",
+                        directoryHint: .notDirectory
+                    )
+                ],
+            ],
+            directories: [
+                URL(
+                    filePath: "/Users/test/Outfits",
+                    directoryHint: .isDirectory
+                ),
+                URL(
+                    filePath: "/Users/test/Outfits/Casual",
+                    directoryHint: .isDirectory
+                ),
+            ]
+        )
+
+        let categories = try await env.sut.getCategories()
+
+        #expect(categories.count == 1)
+        #expect(categories.first?.name == "Casual")
     }
 
     @Test("async detectChanges detects filesystem changes")
@@ -412,6 +549,16 @@ struct AsyncOutfitPickerTests {
         } catch { #expect(error is OutfitPickerError) }
 
         do {
+            _ = try await sut.getCategoryInfo()
+            #expect(Bool(false), "Should have thrown")
+        } catch { #expect(error is OutfitPickerError) }
+
+        do {
+            _ = try await sut.getCategories()
+            #expect(Bool(false), "Should have thrown")
+        } catch { #expect(error is OutfitPickerError) }
+
+        do {
             _ = try await sut.getAvailableCount(for: "Test")
             #expect(Bool(false), "Should have thrown")
         } catch { #expect(error is OutfitPickerError) }
@@ -423,6 +570,33 @@ struct AsyncOutfitPickerTests {
 
         do {
             _ = try await sut.detectChanges()
+            #expect(Bool(false), "Should have thrown")
+        } catch { #expect(error is OutfitPickerError) }
+
+        do {
+            try await sut.resetCategory("Test")
+            #expect(Bool(false), "Should have thrown")
+        } catch { #expect(error is OutfitPickerError) }
+
+        do {
+            try await sut.resetAllCategories()
+            #expect(Bool(false), "Should have thrown")
+        } catch { #expect(error is OutfitPickerError) }
+
+        do {
+            try await sut.partialReset(categoryName: "Test", wornCount: 1)
+            #expect(Bool(false), "Should have thrown")
+        } catch { #expect(error is OutfitPickerError) }
+
+        do {
+            let changes = CategoryChanges(
+                newCategories: [],
+                deletedCategories: [],
+                changedCategories: [],
+                addedFiles: [:],
+                deletedFiles: [:]
+            )
+            try await sut.updateConfig(with: changes)
             #expect(Bool(false), "Should have thrown")
         } catch { #expect(error is OutfitPickerError) }
     }
