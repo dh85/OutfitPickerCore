@@ -23,12 +23,12 @@ public protocol ConfigServiceProtocol: Sendable {
 /// try service.save(config)
 /// let loaded = try service.load()
 /// ```
-struct ConfigService: ConfigServiceProtocol, @unchecked Sendable {
+public struct ConfigService: ConfigServiceProtocol, @unchecked Sendable {
     private let fileService: FileService<Config>
 
     /// Creates a new configuration service.
     /// - Parameter fileManager: File manager for filesystem operations. Defaults to `.default`
-    init(
+    public init(
         fileManager: any FileManagerProtocol = FileManager.default,
         dataManager: DataManagerProtocol = DefaultDataManager(),
         directoryProvider: DirectoryProvider = DefaultDirectoryProvider()
@@ -45,14 +45,14 @@ struct ConfigService: ConfigServiceProtocol, @unchecked Sendable {
     /// Returns the full path to the configuration file.
     /// - Returns: URL pointing to the config.json file location
     /// - Throws: `ConfigError.pathTraversalNotAllowed` if no valid config directory found
-    func configPath() throws -> URL {
+    public func configPath() throws -> URL {
         try fileService.filePath()
     }
 
     /// Loads configuration from the filesystem.
     /// Returns: Decoded Config object
     /// Throws: File system errors or JSON decoding errors
-    func load() throws -> Config {
+    public func load() throws -> Config {
         guard let config = try fileService.load() else {
             throw OutfitPickerError.configurationNotFound
         }
@@ -62,13 +62,13 @@ struct ConfigService: ConfigServiceProtocol, @unchecked Sendable {
     /// Saves configuration to the filesystem.
     /// - Parameter config: Configuration object to persist
     /// - Throws: File system errors or JSON encoding errors
-    func save(_ config: Config) throws {
+    public func save(_ config: Config) throws {
         try fileService.save(config)
     }
 
     /// Deletes the configuration file from the filesystem.
     /// - Throws: File system errors if deletion fails
-    func delete() throws {
+    public func delete() throws {
         try fileService.delete()
     }
 }

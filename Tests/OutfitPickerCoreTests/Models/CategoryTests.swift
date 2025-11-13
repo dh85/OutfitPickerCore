@@ -1,5 +1,7 @@
 import Foundation
+import OutfitPickerTestSupport
 import Testing
+
 @testable import OutfitPickerCore
 
 struct CategoryTests {

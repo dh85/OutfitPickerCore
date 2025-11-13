@@ -41,7 +41,7 @@ public struct DefaultDirectoryProvider: DirectoryProvider {
     }
 }
 
-struct FileService<T: Codable> {
+public struct FileService<T: Codable> {
     private let fileManager: any FileManagerProtocol
     private let dataManager: DataManagerProtocol
     private let directoryProvider: DirectoryProvider
@@ -49,7 +49,7 @@ struct FileService<T: Codable> {
     private let appName = "outfitpicker"
     private let errorMapper: @Sendable () -> Error
 
-    init(
+    public init(
         fileName: String,
         fileManager: any FileManagerProtocol = FileManager.default,
         dataManager: DataManagerProtocol = DefaultDataManager(),
@@ -65,7 +65,7 @@ struct FileService<T: Codable> {
         self.errorMapper = errorMapper
     }
 
-    func filePath() throws -> URL {
+    public func filePath() throws -> URL {
         do {
             return try directoryProvider.baseDirectory()
                 .appending(path: appName, directoryHint: .isDirectory)
@@ -75,7 +75,7 @@ struct FileService<T: Codable> {
         }
     }
 
-    func load() throws -> T? {
+    public func load() throws -> T? {
         let url = try filePath()
         guard
             fileManager.fileExists(
@@ -89,7 +89,7 @@ struct FileService<T: Codable> {
         return try JSONDecoder().decode(T.self, from: data)
     }
 
-    func save(_ object: T) throws {
+    public func save(_ object: T) throws {
         let url = try filePath()
         try ensureDirectoryExists(at: url.deletingLastPathComponent())
 
@@ -99,7 +99,7 @@ struct FileService<T: Codable> {
         try dataManager.write(data, to: url)
     }
 
-    func delete() throws {
+    public func delete() throws {
         let url = try filePath()
         if fileManager.fileExists(
             atPath: url.path(percentEncoded: false),

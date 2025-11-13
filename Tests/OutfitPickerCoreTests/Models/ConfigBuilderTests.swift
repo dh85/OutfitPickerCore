@@ -1,6 +1,6 @@
+import OutfitPickerCore
+import OutfitPickerTestSupport
 import Testing
-
-@testable import OutfitPickerCore
 
 struct ConfigBuilderTests {
     @Test func basicBuild() throws {
