@@ -8,95 +8,93 @@ struct CategoriesTests {
 
     private let root = "/Users/test/Outfits"
 
-    // MARK: - Success cases
-
-    @Test
-    func returnsCategoryReferences_sorted_andMatchingPaths() throws {
+    @Test func returnsNonExcludedCategories_sortedByName() async throws {
         let fs = makeFS(
             root: root,
             categories: [
-                "B": ["b.avatar"],  // deliberately unordered
+                "B": ["b.avatar"],
                 "A": ["a.avatar"],
+                "Excluded": ["ex.avatar"],
             ]
         )
 
         let env = try makeOutfitPickerSUT(
             root: root,
+            config: try Config(
+                root: root,
+                language: "en",
+                excludedCategories: ["Excluded"]
+            ),
             fileSystem: fs.contents,
             directories: Array(fs.directories)
         )
 
-        let categories = try env.sut.getCategories().get()
+        let categories = try await env.sut.getCategories()
 
         #expect(categories.count == 2)
-        #expect(categories.map(\.name) == ["A", "B"])
+        #expect(categories.map { $0.name } == ["A", "B"])
         #expect(normPath(categories[0].path) == "\(root)/A")
         #expect(normPath(categories[1].path) == "\(root)/B")
     }
 
-    @Test
-    func returnsEmpty_whenNoDirectoriesExist() throws {
+    @Test func returnsEmpty_whenNoDirectoriesExist() async throws {
         let env = try makeOutfitPickerSUT(root: root)
-        let categories = try env.sut.getCategories().get()
+        let categories = try await env.sut.getCategories()
         #expect(categories.isEmpty)
     }
 
-    @Test
-    func excludesUserExcludedCategories() throws {
+    @Test func includesEmptyAndNoAvatarCategories_excludesUserExcluded() async throws {
         let fs = makeFS(
             root: root,
             categories: [
-                "Excluded": [],
+                "Empty": [],
+                "NoAvatar": ["readme.txt"],
                 "Good": ["g.avatar"],
+                "Excluded": ["ex.avatar"],
             ]
         )
 
-        let config = try Config(
-            root: root,
-            language: "en",
-            excludedCategories: ["Excluded"]
-        )
         let env = try makeOutfitPickerSUT(
             root: root,
-            config: config,
+            config: try Config(
+                root: root,
+                language: "en",
+                excludedCategories: ["Excluded"]
+            ),
             fileSystem: fs.contents,
             directories: Array(fs.directories)
         )
 
-        let categories = try env.sut.getCategories().get()
+        let categories = try await env.sut.getCategories()
         #expect(categories.count == 1)
         #expect(categories[0].name == "Good")
     }
 
-    // MARK: - Error mapping
-
     @Test
-    func mapsConfigLoadFailure_toInvalidConfiguration() {
+    func mapsConfigLoadFailure_toInvalidConfiguration() async {
         let sut = makeOutfitPickerSUTWithConfigError(
             ConfigError.pathTraversalNotAllowed
         )
-        let result = sut.getCategories()
-
-        switch result {
-        case .failure(let e):
-            #expect(e == .invalidConfiguration)
-        case .success:
+        
+        do {
+            _ = try await sut.getCategories()
             Issue.record("Expected invalidConfiguration")
+        } catch {
+            #expect(error is OutfitPickerError)
         }
     }
 
     @Test
-    func mapsFileManagerFailureInsideCategoryInfo_toFileSystemError() throws {
+    func mapsFileManagerFailureInsideCategoryInfo_toFileSystemError() async throws {
         let sut = try makeOutfitPickerSUTWithFileSystemError(
             FileSystemError.operationFailed
         )
-        let result = sut.getCategories()
-
-        switch result {
-        case .failure(let e):
-            #expect(e == .fileSystemError)
-        case .success:
+        
+        do {
+            _ = try await sut.getCategories()
             Issue.record("Expected fileSystemError")
+        } catch {
+            #expect(error is OutfitPickerError)
         }
     }
 }

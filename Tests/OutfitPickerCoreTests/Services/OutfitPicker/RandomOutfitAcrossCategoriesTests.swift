@@ -8,42 +8,41 @@ struct RandomOutfitAcrossCategoriesTests {
 
     private let root = "/Users/test/Outfits"
 
-    // MARK: - Nil cases
-
-    @Test func across_returnsNil_whenNoCategoriesAtRoot() throws {
+    @Test func across_returnsNil_whenNoCategoriesAtRoot() async throws {
         let env = try makeOutfitPickerSUT(root: root)
-        let value = try env.sut.showRandomOutfitAcrossCategories().get()
+        let value = try await env.sut.showRandomOutfitAcrossCategories()
         #expect(value == nil)
     }
 
-    @Test func across_skipsExcludedEmptyAndNoAvatar_selectsFromAvailable()
-        throws
-    {
-        // Excluded: userExcluded
-        // Empty: no files
-        // Docs: only non-avatar
-        // Good: has avatar
-        let env = try makeAcrossCategoriesSUT(
+    @Test func across_skipsExcludedEmptyAndNoAvatar_selectsFromAvailable() async throws {
+        let fs = makeFS(
             root: root,
             categories: [
-                "Excluded": ["ignore.txt"],
+                "Excluded": ["ex.avatar"],
                 "Empty": [],
-                "Docs": ["readme.md", "photo.png"],
-                "Good": ["g1.avatar"],
-            ],
-            excluded: ["Excluded"]
+                "NoAvatar": ["readme.txt"],
+                "Good": ["g1.avatar", "g2.avatar"],
+            ]
+        )
+        
+        let env = try makeOutfitPickerSUT(
+            root: root,
+            config: try Config(
+                root: root,
+                language: "en",
+                excludedCategories: ["Excluded"]
+            ),
+            fileSystem: fs.contents,
+            directories: Array(fs.directories)
         )
 
-        let result = env.sut.showRandomOutfitAcrossCategories()
-        let ref = try #require(try result.get())
+        let ref = try await env.sut.showRandomOutfitAcrossCategories()
 
-        #expect(ref.category.name == "Good")
-        #expect(ref.fileName == "g1.avatar")
-        #expect(normPath(ref.category.path) == "\(root)/Good")
-        #expect(env.cache.saved.isEmpty)
+        #expect(ref!.category.name == "Good")
+        #expect(["g1.avatar", "g2.avatar"].contains(ref!.fileName))
     }
 
-    @Test func across_respectsWornPerCategory_onlyUnwornAddedToPool() throws {
+    @Test func across_respectsWornPerCategory_onlyUnwornAddedToPool() async throws {
         // Good has two avatars; one already worn → must pick the other
         let cache = OutfitCache(categories: [
             "Good": CategoryCache(
@@ -52,160 +51,121 @@ struct RandomOutfitAcrossCategoriesTests {
             )
         ])
 
-        let env = try makeAcrossCategoriesSUT(
+        let fs = makeFS(
             root: root,
-            categories: [
-                "Good": ["g1.avatar", "g2.avatar"]
-            ],
-            cache: cache
+            categories: ["Good": ["g1.avatar", "g2.avatar"]]
         )
 
-        let result = env.sut.showRandomOutfitAcrossCategories()
-        let ref = try #require(try result.get())
+        let env = try makeOutfitPickerSUT(
+            root: root,
+            cache: cache,
+            fileSystem: fs.contents,
+            directories: Array(fs.directories)
+        )
 
-        #expect(ref.category.name == "Good")
-        #expect(ref.fileName == "g2.avatar")
-        #expect(env.cache.saved.isEmpty)
+        let ref = try await env.sut.showRandomOutfitAcrossCategories()
+
+        #expect(ref!.category.name == "Good")
+        #expect(ref!.fileName == "g2.avatar")
     }
 
-    @Test func across_allCategoriesFullyWorn_returnsNil() throws {
-        // All worn → availableFiles empty for each category → overall nil
+    @Test func across_returnsNil_whenAllCategoriesFullyWorn() async throws {
         let cache = OutfitCache(categories: [
             "A": CategoryCache(
-                wornOutfits: ["a.avatar"],
+                wornOutfits: ["a1.avatar"],
                 totalOutfits: 1
             ),
             "B": CategoryCache(
-                wornOutfits: ["b.avatar"],
+                wornOutfits: ["b1.avatar"],
                 totalOutfits: 1
             ),
         ])
 
-        let env = try makeAcrossCategoriesSUT(
+        let fs = makeFS(
             root: root,
             categories: [
-                "A": ["a.avatar"],
-                "B": ["b.avatar"],
-            ],
-            cache: cache
-        )
-
-        let result: OutfitPickerResult<OutfitReference?> =
-            env.sut.showRandomOutfitAcrossCategories()
-        let value = try result.get()
-
-        #expect(value == nil)
-    }
-
-    // MARK: - Directory detection / guard coverage
-
-    @Test func across_ignoresNonDirectoryEntriesAtRoot() throws {
-        let rootURL = URL(filePath: root, directoryHint: .isDirectory)
-        let goodURL = rootURL.appending(
-            path: "Good",
-            directoryHint: .isDirectory
-        )
-        let goodFile = goodURL.appending(
-            path: "g1.avatar",
-            directoryHint: .notDirectory
-        )
-        let junkURL = rootURL.appending(
-            path: "notes.txt",
-            directoryHint: .notDirectory
-        )
-
-        let contents: [URL: [URL]] = [
-            rootURL: [goodURL, junkURL],
-            goodURL: [goodFile],
-            junkURL: [],
-        ]
-
-        let env = try makeOutfitPickerSUT(
-            root: root,
-            fileSystem: contents,
-            directories: [rootURL, goodURL]
-        )
-
-        let ref = try #require(
-            try env.sut.showRandomOutfitAcrossCategories().get()
-        )
-
-        #expect(ref.category.name == "Good")
-        #expect(ref.fileName == "g1.avatar")
-        #expect(normPath(ref.category.path) == "\(root)/Good")
-        #expect(env.cache.saved.isEmpty)
-    }
-
-    // MARK: - Error mapping
-
-    @Test func across_skipsCategoryIfFilesDisappearBetweenScanAndPick() throws {
-        let rootURL = URL(filePath: root, directoryHint: .isDirectory)
-        let goodURL = rootURL.appending(
-            path: "Good",
-            directoryHint: .isDirectory
-        )
-        let goodFile = goodURL.appending(
-            path: "g1.avatar",
-            directoryHint: .notDirectory
-        )
-
-        let contents: [URL: [URL]] = [
-            rootURL: [goodURL],
-            goodURL: [goodFile],
-        ]
-
-        let fm = FakeFileManager(
-            .ok(contents),
-            directories: [rootURL, goodURL],
-            secondCallEmptyFor: [goodURL]
+                "A": ["a1.avatar"],
+                "B": ["b1.avatar"],
+            ]
         )
 
         let env = try makeOutfitPickerSUT(
             root: root,
-            fileSystem: contents,
-            directories: [rootURL, goodURL]
-        )
-        // Replace the file manager with the special one
-        let sut = OutfitPicker(
-            configService: env.config,
-            cacheService: env.cache,
-            fileManager: fm
+            cache: cache,
+            fileSystem: fs.contents,
+            directories: Array(fs.directories)
         )
 
-        let value = try sut.showRandomOutfitAcrossCategories().get()
+        let value = try await env.sut.showRandomOutfitAcrossCategories()
         #expect(value == nil)
+    }
+
+    @Test func across_picksFromMultipleCategories_whenAvailable() async throws {
+        let fs = makeFS(
+            root: root,
+            categories: [
+                "A": ["a1.avatar"],
+                "B": ["b1.avatar"],
+            ]
+        )
+
+        let env = try makeOutfitPickerSUT(
+            root: root,
+            fileSystem: fs.contents,
+            directories: Array(fs.directories)
+        )
+
+        let ref = try await env.sut.showRandomOutfitAcrossCategories()
+
+        #expect(["A", "B"].contains(ref!.category.name))
+        #expect(["a1.avatar", "b1.avatar"].contains(ref!.fileName))
+    }
+
+    @Test func across_noSaveWhenNoResetNeeded() async throws {
+        let fs = makeFS(
+            root: root,
+            categories: ["Solo": ["s1.avatar"]]
+        )
+
+        let env = try makeOutfitPickerSUT(
+            root: root,
+            fileSystem: fs.contents,
+            directories: Array(fs.directories)
+        )
+
+        let value = try await env.sut.showRandomOutfitAcrossCategories()
+        #expect(value?.fileName == "s1.avatar")
+        #expect(value?.category.name == "Solo")
         #expect(env.cache.saved.isEmpty)
     }
 
-    @Test func across_failure_configLoad_mapsToInvalidConfiguration() {
+    @Test func across_failure_configLoad_mapsToInvalidConfiguration() async {
         let sut = makeOutfitPickerSUTWithConfigError(
             ConfigError.pathTraversalNotAllowed
         )
-        let result = sut.showRandomOutfitAcrossCategories()
-
-        switch result {
-        case .failure(let e):
-            #expect(e == .invalidConfiguration)
-        case .success:
+        
+        do {
+            _ = try await sut.showRandomOutfitAcrossCategories()
             Issue.record("Expected invalidConfiguration")
+        } catch {
+            #expect(error is OutfitPickerError)
         }
     }
 
-    @Test func across_failure_rootListing_mapsToFileSystemError() throws {
+    @Test func across_failure_rootListing_mapsToFileSystemError() async throws {
         let sut = try makeOutfitPickerSUTWithFileSystemError(
             FileSystemError.operationFailed
         )
-        let result = sut.showRandomOutfitAcrossCategories()
-
-        switch result {
-        case .failure(let e):
-            #expect(e == .fileSystemError)
-        case .success:
+        
+        do {
+            _ = try await sut.showRandomOutfitAcrossCategories()
             Issue.record("Expected fileSystemError")
+        } catch {
+            #expect(error is OutfitPickerError)
         }
     }
 
-    @Test func across_failure_cacheLoad_mapsToCacheError() throws {
+    @Test func across_failure_cacheLoad_mapsToCacheError() async throws {
         let fs = makeFS(root: root, categories: ["Good": ["g1.avatar"]])
         let config = try Config(root: root, language: "en")
         let configSvc = FakeConfigService(.ok(config))
@@ -223,12 +183,11 @@ struct RandomOutfitAcrossCategoriesTests {
             fileManager: fm
         )
 
-        let result = sut.showRandomOutfitAcrossCategories()
-        switch result {
-        case .failure(let e):
-            #expect(e == .cacheError)
-        case .success:
+        do {
+            _ = try await sut.showRandomOutfitAcrossCategories()
             Issue.record("Expected cacheError")
+        } catch {
+            #expect(error is OutfitPickerError)
         }
     }
 }

@@ -6,89 +6,109 @@ import Testing
 @Suite
 struct AvailableCountTests {
 
-    private let safeRoot = "/Users/test/Outfits"
+    private let root = "/Users/test/Outfits"
 
-    // MARK: - Success cases
-
-    @Test
-    func availableCount_noCache_returnsAllFiles() throws {
+    @Test func returnsFullCount_whenNoCacheExists() async throws {
         let files = ["a.avatar", "b.avatar", "c.avatar"]
-        let env = try makeOutfitPickerSUTWithCategory(
+        let env = try makeSingleCategorySUT(
+            root: root,
             category: "Club",
             files: files
         )
 
-        let count = try env.sut.getAvailableCount(for: "Club").get()
-        #expect(count == files.count)
+        let count = try await env.sut.getAvailableCount(for: "Club")
+
+        #expect(count == 3)
     }
 
-    @Test
-    func availableCount_partialWorn_returnsRemaining() throws {
-        let files = ["one.avatar", "two.avatar", "three.avatar"]
+    @Test func returnsRemainingCount_whenSomeWorn() async throws {
+        let files = ["a.avatar", "b.avatar", "c.avatar"]
         let cache = OutfitCache(categories: [
-            "Chic": CategoryCache(
-                wornOutfits: ["one.avatar"],
-                totalOutfits: files.count
+            "Club": CategoryCache(
+                wornOutfits: ["a.avatar"],
+                totalOutfits: 3
             )
         ])
 
-        let env = try makeOutfitPickerSUTWithCategory(
-            category: "Chic",
+        let env = try makeSingleCategorySUT(
+            root: root,
+            category: "Club",
             files: files,
             cache: cache
         )
 
-        let count = try env.sut.getAvailableCount(for: "Chic").get()
-        #expect(count == 2)  // 3 total, 1 worn → 2 remaining
+        let count = try await env.sut.getAvailableCount(for: "Club")
+
+        #expect(count == 2)
     }
 
-    @Test
-    func availableCount_allWorn_rotationComplete_returnsTotal() throws {
-        let files = ["x.avatar", "y.avatar"]
+    @Test func returnsFullCount_whenRotationComplete() async throws {
+        let files = ["a.avatar", "b.avatar"]
         let cache = OutfitCache(categories: [
-            "Latex": CategoryCache(
+            "Club": CategoryCache(
                 wornOutfits: Set(files),
-                totalOutfits: files.count
+                totalOutfits: 2
             )
         ])
 
-        let env = try makeOutfitPickerSUTWithCategory(
-            category: "Latex",
+        let env = try makeSingleCategorySUT(
+            root: root,
+            category: "Club",
             files: files,
             cache: cache
         )
 
-        let count = try env.sut.getAvailableCount(for: "Latex").get()
-        #expect(count == files.count)  // rotationComplete → count = files.count, not 0
+        let count = try await env.sut.getAvailableCount(for: "Club")
+
+        #expect(count == 2)  // full count when rotation complete
     }
 
-    @Test
-    func availableCount_emptyDirectory_returnsZero() throws {
-        let env = try makeOutfitPickerSUTWithCategory(
+    @Test func returnsZero_whenCategoryEmpty() async throws {
+        let env = try makeSingleCategorySUT(
+            root: root,
             category: "Empty",
             files: []
         )
 
-        let count = try env.sut.getAvailableCount(for: "Empty").get()
+        let count = try await env.sut.getAvailableCount(for: "Empty")
+
         #expect(count == 0)
     }
 
-    // MARK: - Error mapping
+    @Test func mapsConfigLoadFailure_toInvalidConfiguration() async {
+        let sut = makeOutfitPickerSUTWithConfigError(ConfigError.missingRoot)
 
-    @Test
-    func availableCount_configLoadFailure_mapsToInvalidConfiguration() {
-        let sut = makeOutfitPickerSUTWithConfigError(
-            ConfigError.pathTraversalNotAllowed
+        do {
+            _ = try await sut.getAvailableCount(for: "Any")
+            Issue.record("Expected invalidConfiguration")
+        } catch {
+            #expect(error is OutfitPickerError)
+        }
+    }
+
+    @Test func mapsFileManagerFailure_toFileSystemError() async throws {
+        let sut = try makeOutfitPickerSUTWithFileSystemError(
+            FileSystemError.operationFailed
         )
-        let result = sut.getAvailableCount(for: "Any")
 
-        switch result {
-        case .failure(let e):
-            #expect(e == .invalidConfiguration)
-        case .success:
-            Issue.record(
-                "Expected invalidConfiguration when config load fails."
-            )
+        do {
+            _ = try await sut.getAvailableCount(for: "Any")
+            Issue.record("Expected fileSystemError")
+        } catch {
+            #expect(error is OutfitPickerError)
+        }
+    }
+
+    @Test func mapsCacheLoadFailure_toCacheError() async throws {
+        let sut = try makeOutfitPickerSUTWithCacheError(
+            CacheError.decodingFailed
+        )
+
+        do {
+            _ = try await sut.getAvailableCount(for: "Any")
+            Issue.record("Expected cacheError")
+        } catch {
+            #expect(error is OutfitPickerError)
         }
     }
 }

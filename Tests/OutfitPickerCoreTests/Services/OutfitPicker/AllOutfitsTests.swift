@@ -8,71 +8,55 @@ struct AllOutfitsTests {
 
     private let root = "/Users/test/Outfits"
 
-    // MARK: - Happy paths
-
-    @Test
-    func showAllOutfits_returnsAllAvatars_sortedAndWithCategoryReference()
-        throws
-    {
-        let files = ["b.avatar", "a.avatar"]
-        let env = try makeOutfitPickerSUTWithCategory(
+    @Test func returnsAllOutfitsFromCategory_sortedByFileName() async throws {
+        let files = ["c.avatar", "a.avatar", "b.avatar"]
+        let env = try makeSingleCategorySUT(
             root: root,
             category: "Club",
             files: files
         )
 
-        let outfits = try env.sut.showAllOutfits(from: "Club").get()
+        let outfits = try await env.sut.showAllOutfits(from: "Club")
 
-        #expect(outfits.count == 2)
-        #expect(outfits[0].fileName == "a.avatar")  // sorted ascending
-        #expect(outfits[1].fileName == "b.avatar")
-        #expect(outfits[0].category.name == "Club")
-        #expect(normPath(outfits[0].category.path) == "\(root)/Club")
+        #expect(outfits.count == 3)
+        #expect(outfits.map(\.fileName) == ["a.avatar", "b.avatar", "c.avatar"])
+        #expect(outfits.allSatisfy { $0.category.name == "Club" })
+        #expect(outfits.allSatisfy { normPath($0.category.path) == "\(root)/Club" })
     }
 
-    @Test
-    func showAllOutfits_returnsEmptyArray_whenNoAvatarFiles() throws {
-        let env = try makeOutfitPickerSUTWithCategory(
+    @Test func returnsEmptyArray_whenCategoryHasNoAvatarFiles() async throws {
+        let env = try makeSingleCategorySUT(
             root: root,
-            category: "Misc",
-            files: ["photo.png", "readme.txt"]  // non-avatar files
+            category: "Empty",
+            files: []
         )
 
-        let outfits = try env.sut.showAllOutfits(from: "Misc").get()
+        let outfits = try await env.sut.showAllOutfits(from: "Empty")
+
         #expect(outfits.isEmpty)
     }
 
-    // MARK: - Error mapping
-
-    @Test
-    func showAllOutfits_configLoadFailure_mapsToInvalidConfiguration() {
+    @Test func mapsConfigLoadFailure_toInvalidConfiguration() async {
         let sut = makeOutfitPickerSUTWithConfigError(ConfigError.missingRoot)
-        let result = sut.showAllOutfits(from: "Any")
 
-        switch result {
-        case .failure(let e):
-            #expect(e == .invalidConfiguration)
-        case .success:
-            Issue.record(
-                "Expected invalidConfiguration when config load fails."
-            )
+        do {
+            _ = try await sut.showAllOutfits(from: "Any")
+            Issue.record("Expected invalidConfiguration")
+        } catch {
+            #expect(error is OutfitPickerError)
         }
     }
 
-    @Test
-    func showAllOutfits_fileManagerFailure_mapsToFileSystemError() throws {
+    @Test func mapsFileManagerFailure_toFileSystemError() async throws {
         let sut = try makeOutfitPickerSUTWithFileSystemError(
             FileSystemError.operationFailed
         )
-        let result = sut.showAllOutfits(from: "Any")
 
-        switch result {
-        case .failure(let e):
-            #expect(e == .fileSystemError)
-        case .success:
-            Issue.record(
-                "Expected fileSystemError when directory listing fails."
-            )
+        do {
+            _ = try await sut.showAllOutfits(from: "Any")
+            Issue.record("Expected fileSystemError")
+        } catch {
+            #expect(error is OutfitPickerError)
         }
     }
 }

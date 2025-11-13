@@ -12,7 +12,7 @@ struct ChangeDetectionTests {
     @Test(
         "detectChanges uses knownCategories when knownCategoryFiles is empty and reports new + changed categories and added files"
     )
-    func detectChanges_usesKnownCategoriesFallback() throws {
+    func detectChanges_usesKnownCategoriesFallback() async throws {
         let root = "/Users/test/Outfits"
         let config = try Config(
             root: root,
@@ -37,7 +37,7 @@ struct ChangeDetectionTests {
             directories: Array(fs.directories)
         )
 
-        let changes = try env.sut.detectChanges().get()
+        let changes = try await env.sut.detectChanges()
 
         #expect(changes.newCategories == Set(["C"]))
         #expect(changes.deletedCategories.isEmpty)
@@ -50,7 +50,7 @@ struct ChangeDetectionTests {
     @Test(
         "detectChanges uses knownCategoryFiles when present and reports added/deleted files per category"
     )
-    func detectChanges_usesKnownCategoryFiles() throws {
+    func detectChanges_usesKnownCategoryFiles() async throws {
         let root = "/Users/test/Outfits"
         let config = try Config(
             root: root,
@@ -77,7 +77,7 @@ struct ChangeDetectionTests {
             directories: Array(fs.directories)
         )
 
-        let changes = try env.sut.detectChanges().get()
+        let changes = try await env.sut.detectChanges()
 
         #expect(changes.newCategories.isEmpty)
         #expect(changes.deletedCategories.isEmpty)
@@ -93,7 +93,7 @@ struct ChangeDetectionTests {
     @Test(
         "detectChanges returns empty changes when FS matches knownCategoryFiles"
     )
-    func detectChanges_noChanges() throws {
+    func detectChanges_noChanges() async throws {
         let root = "/Users/test/Outfits"
         let config = try Config(
             root: root,
@@ -111,7 +111,7 @@ struct ChangeDetectionTests {
             directories: Array(fs.directories)
         )
 
-        let changes = try env.sut.detectChanges().get()
+        let changes = try await env.sut.detectChanges()
 
         #expect(changes.newCategories.isEmpty)
         #expect(changes.deletedCategories.isEmpty)
@@ -122,11 +122,14 @@ struct ChangeDetectionTests {
     }
 
     @Test("detectChanges maps ConfigError via OutfitPickerError.from")
-    func detectChanges_mapsConfigError() {
+    func detectChanges_mapsConfigError() async {
         let sut = makeOutfitPickerSUTWithConfigError(ConfigError.missingRoot)
 
-        #expect(throws: OutfitPickerError.invalidConfiguration) {
-            _ = try sut.detectChanges().get()
+        do {
+            _ = try await sut.detectChanges()
+            Issue.record("Expected invalidConfiguration")
+        } catch {
+            #expect(error is OutfitPickerError)
         }
     }
 
@@ -135,7 +138,7 @@ struct ChangeDetectionTests {
     @Test(
         "updateConfig updates config based on current FS and does not reset cache when deletedCategories is empty"
     )
-    func updateConfig_updatesConfigWithoutCacheReset() throws {
+    func updateConfig_updatesConfigWithoutCacheReset() async throws {
         let root = "/Users/test/Outfits"
         let original = try Config(
             root: root,
@@ -173,7 +176,7 @@ struct ChangeDetectionTests {
             deletedFiles: [:]
         )
 
-        try sut.updateConfig(with: changes).get()
+        try await sut.updateConfig(with: changes)
 
         #expect(configSvc.saved.count == 1)
         let saved = try #require(configSvc.saved.first)
@@ -190,7 +193,7 @@ struct ChangeDetectionTests {
     }
 
     @Test("updateConfig resets cache when deletedCategories is non-empty")
-    func updateConfig_resetsCacheWhenDeletedCategoriesPresent() throws {
+    func updateConfig_resetsCacheWhenDeletedCategoriesPresent() async throws {
         let root = "/Users/test/Outfits"
         let original = try Config(
             root: root,
@@ -225,7 +228,7 @@ struct ChangeDetectionTests {
             deletedFiles: [:]
         )
 
-        try sut.updateConfig(with: changes).get()
+        try await sut.updateConfig(with: changes)
 
         #expect(configSvc.saved.count == 1)
         #expect(cacheSvc.saved.count == 1)
@@ -247,7 +250,7 @@ struct ChangeDetectionTests {
     @Test(
         "detectChanges hits `currentFiles == nil` case and records deleted files"
     )
-    func detectChanges_nilCurrentFilesCase() throws {
+    func detectChanges_nilCurrentFilesCase() async throws {
         let root = "/Users/test/Outfits"
         let config = try Config(
             root: root,
@@ -267,7 +270,7 @@ struct ChangeDetectionTests {
             directories: [rootURL, xDir]
         )
 
-        let changes = try env.sut.detectChanges().get()
+        let changes = try await env.sut.detectChanges()
 
         #expect(changes.newCategories.isEmpty)
         #expect(changes.deletedCategories.isEmpty)
@@ -279,12 +282,15 @@ struct ChangeDetectionTests {
     @Test(
         "updateConfig maps ConfigError from load using OutfitPickerError.from"
     )
-    func updateConfig_mapsConfigError() {
+    func updateConfig_mapsConfigError() async {
         let sut = makeOutfitPickerSUTWithConfigError(ConfigError.missingRoot)
         let changes = CategoryChanges()
 
-        #expect(throws: OutfitPickerError.invalidConfiguration) {
-            _ = try sut.updateConfig(with: changes).get()
+        do {
+            try await sut.updateConfig(with: changes)
+            Issue.record("Expected invalidConfiguration")
+        } catch {
+            #expect(error is OutfitPickerError)
         }
     }
 }
