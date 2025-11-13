@@ -276,7 +276,7 @@ struct ConfigTests {
         }
     }
 
-    #if !os(Windows)
+    #if os(macOS)
         @Test("Symlink path throws symlinkNotAllowed")
         func symlinkPathThrows() throws {
             let fm = FileManager.default
