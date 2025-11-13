@@ -97,6 +97,60 @@ public protocol OutfitPickerProtocol: Sendable {
     func updateConfig(with changes: CategoryChanges) -> OutfitPickerResult<Void>
 }
 
+/// Async/await version of the outfit picker protocol.
+/// 
+/// This protocol provides the same functionality as `OutfitPickerProtocol` but uses
+/// async/await for better concurrency support and cleaner error handling.
+/// 
+/// ## Usage Example
+/// ```swift
+/// let picker = OutfitPicker(configService: configService, fileManager: FileManager.default)
+/// 
+/// do {
+///     let outfit = try await picker.showRandomOutfit(from: "casual")
+///     print("Selected outfit: \(outfit?.fileName ?? "none available")")
+/// } catch {
+///     print("Error: \(error)")
+/// }
+/// ```
+public protocol AsyncOutfitPickerProtocol: Sendable {
+    /// Shows a random unworn outfit from the specified category.
+    func showRandomOutfit(from categoryName: String) async throws -> OutfitReference?
+    
+    /// Shows a random unworn outfit from any available category.
+    func showRandomOutfitAcrossCategories() async throws -> OutfitReference?
+    
+    /// Marks an outfit as worn by adding it to the category's worn list.
+    func wearOutfit(_ outfit: OutfitReference) async throws
+    
+    /// Retrieves detailed information about all categories including their states.
+    func getCategoryInfo() async throws -> [CategoryInfo]
+    
+    /// Retrieves references to all non-excluded categories.
+    func getCategories() async throws -> [CategoryReference]
+    
+    /// Gets the count of available (unworn) outfits in a category.
+    func getAvailableCount(for categoryName: String) async throws -> Int
+    
+    /// Resets the worn outfit list for a specific category.
+    func resetCategory(_ categoryName: String) async throws
+    
+    /// Resets the worn outfit lists for all categories.
+    func resetAllCategories() async throws
+    
+    /// Partially resets a category to have only the specified number of worn outfits.
+    func partialReset(categoryName: String, wornCount: Int) async throws
+    
+    /// Retrieves all outfit references from a specific category.
+    func showAllOutfits(from categoryName: String) async throws -> [OutfitReference]
+    
+    /// Detects changes in the filesystem compared to the stored configuration.
+    func detectChanges() async throws -> CategoryChanges
+    
+    /// Updates the configuration with detected changes.
+    func updateConfig(with changes: CategoryChanges) async throws
+}
+
 /// Protocol abstracting FileManager operations for testability.
 /// 
 /// This protocol wraps essential FileManager methods used by the outfit picker,
@@ -176,7 +230,7 @@ extension FileManager: FileManagerProtocol {}
 /// // Use the picker methods
 /// let result = picker.showRandomOutfit(from: "casual")
 /// ```
-public struct OutfitPicker: OutfitPickerProtocol, @unchecked Sendable {
+public struct OutfitPicker: OutfitPickerProtocol, AsyncOutfitPickerProtocol, @unchecked Sendable {
     private let configService: ConfigServiceProtocol
     private let cacheService: CacheServiceProtocol
     private let fileManager: FileManagerProtocol
@@ -697,5 +751,153 @@ public struct OutfitPicker: OutfitPickerProtocol, @unchecked Sendable {
             knownCategories: updatedKnownCategories,
             knownCategoryFiles: updatedKnownCategoryFiles
         )
+    }
+}
+
+// MARK: - Async/Await Implementation
+
+extension OutfitPicker {
+    public func showRandomOutfit(from categoryName: String) async throws -> OutfitReference? {
+        return try await withCheckedThrowingContinuation { continuation in
+            let result = showRandomOutfit(from: categoryName)
+            switch result {
+            case .success(let outfit):
+                continuation.resume(returning: outfit)
+            case .failure(let error):
+                continuation.resume(throwing: error)
+            }
+        }
+    }
+    
+    public func showRandomOutfitAcrossCategories() async throws -> OutfitReference? {
+        return try await withCheckedThrowingContinuation { continuation in
+            let result = showRandomOutfitAcrossCategories()
+            switch result {
+            case .success(let outfit):
+                continuation.resume(returning: outfit)
+            case .failure(let error):
+                continuation.resume(throwing: error)
+            }
+        }
+    }
+    
+    public func wearOutfit(_ outfit: OutfitReference) async throws {
+        return try await withCheckedThrowingContinuation { continuation in
+            let result = wearOutfit(outfit)
+            switch result {
+            case .success:
+                continuation.resume()
+            case .failure(let error):
+                continuation.resume(throwing: error)
+            }
+        }
+    }
+    
+    public func getCategoryInfo() async throws -> [CategoryInfo] {
+        return try await withCheckedThrowingContinuation { continuation in
+            let result = getCategoryInfo()
+            switch result {
+            case .success(let info):
+                continuation.resume(returning: info)
+            case .failure(let error):
+                continuation.resume(throwing: error)
+            }
+        }
+    }
+    
+    public func getCategories() async throws -> [CategoryReference] {
+        return try await withCheckedThrowingContinuation { continuation in
+            let result = getCategories()
+            switch result {
+            case .success(let categories):
+                continuation.resume(returning: categories)
+            case .failure(let error):
+                continuation.resume(throwing: error)
+            }
+        }
+    }
+    
+    public func getAvailableCount(for categoryName: String) async throws -> Int {
+        return try await withCheckedThrowingContinuation { continuation in
+            let result = getAvailableCount(for: categoryName)
+            switch result {
+            case .success(let count):
+                continuation.resume(returning: count)
+            case .failure(let error):
+                continuation.resume(throwing: error)
+            }
+        }
+    }
+    
+    public func resetCategory(_ categoryName: String) async throws {
+        return try await withCheckedThrowingContinuation { continuation in
+            let result = resetCategory(categoryName)
+            switch result {
+            case .success:
+                continuation.resume()
+            case .failure(let error):
+                continuation.resume(throwing: error)
+            }
+        }
+    }
+    
+    public func resetAllCategories() async throws {
+        return try await withCheckedThrowingContinuation { continuation in
+            let result = resetAllCategories()
+            switch result {
+            case .success:
+                continuation.resume()
+            case .failure(let error):
+                continuation.resume(throwing: error)
+            }
+        }
+    }
+    
+    public func partialReset(categoryName: String, wornCount: Int) async throws {
+        return try await withCheckedThrowingContinuation { continuation in
+            let result = partialReset(categoryName: categoryName, wornCount: wornCount)
+            switch result {
+            case .success:
+                continuation.resume()
+            case .failure(let error):
+                continuation.resume(throwing: error)
+            }
+        }
+    }
+    
+    public func showAllOutfits(from categoryName: String) async throws -> [OutfitReference] {
+        return try await withCheckedThrowingContinuation { continuation in
+            let result = showAllOutfits(from: categoryName)
+            switch result {
+            case .success(let outfits):
+                continuation.resume(returning: outfits)
+            case .failure(let error):
+                continuation.resume(throwing: error)
+            }
+        }
+    }
+    
+    public func detectChanges() async throws -> CategoryChanges {
+        return try await withCheckedThrowingContinuation { continuation in
+            let result = detectChanges()
+            switch result {
+            case .success(let changes):
+                continuation.resume(returning: changes)
+            case .failure(let error):
+                continuation.resume(throwing: error)
+            }
+        }
+    }
+    
+    public func updateConfig(with changes: CategoryChanges) async throws {
+        return try await withCheckedThrowingContinuation { continuation in
+            let result = updateConfig(with: changes)
+            switch result {
+            case .success:
+                continuation.resume()
+            case .failure(let error):
+                continuation.resume(throwing: error)
+            }
+        }
     }
 }
