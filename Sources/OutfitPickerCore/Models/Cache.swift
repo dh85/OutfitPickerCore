@@ -70,7 +70,9 @@ public struct OutfitCache: Codable, Equatable {
     }
 
     /// Updates cache with a new category state
-    public func updating(category path: String, with cache: CategoryCache) -> OutfitCache {
+    public func updating(category path: String, with cache: CategoryCache)
+        -> OutfitCache
+    {
         var updatedCategories = categories
         updatedCategories[path] = cache
         return OutfitCache(

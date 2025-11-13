@@ -1,14 +1,14 @@
 import Foundation
 
 /// Core protocol defining the outfit picker functionality.
-/// 
+///
 /// This protocol provides methods for selecting random outfits, managing worn outfit tracking,
 /// and handling category changes. All methods return `OutfitPickerResult` for consistent error handling.
-/// 
+///
 /// ## Usage Example
 /// ```swift
 /// let picker = OutfitPicker(configService: configService, fileManager: FileManager.default)
-/// 
+///
 /// // Show a random outfit from a specific category
 /// switch picker.showRandomOutfit(from: "casual") {
 /// case .success(let outfit):
@@ -19,78 +19,85 @@ import Foundation
 /// ```
 public protocol OutfitPickerProtocol: Sendable {
     /// Shows a random unworn outfit from the specified category.
-    /// 
+    ///
     /// - Parameter categoryName: The name of the category to select from
     /// - Returns: A result containing an optional outfit reference, or nil if no outfits are available
     /// - Note: Automatically resets the category's worn list when all outfits have been worn
-    func showRandomOutfit(from categoryName: String) -> OutfitPickerResult<OutfitReference?>
-    
+    func showRandomOutfit(from categoryName: String) -> OutfitPickerResult<
+        OutfitReference?
+    >
+
     /// Shows a random unworn outfit from any available category.
-    /// 
+    ///
     /// - Returns: A result containing an optional outfit reference, or nil if no outfits are available
     /// - Note: Only considers categories that have unworn outfits available
-    func showRandomOutfitAcrossCategories() -> OutfitPickerResult<OutfitReference?>
-    
+    func showRandomOutfitAcrossCategories() -> OutfitPickerResult<
+        OutfitReference?
+    >
+
     /// Marks an outfit as worn by adding it to the category's worn list.
-    /// 
+    ///
     /// - Parameter outfit: The outfit reference to mark as worn
     /// - Returns: A result indicating success or failure
     /// - Note: Has no effect if the outfit is already marked as worn
     func wearOutfit(_ outfit: OutfitReference) -> OutfitPickerResult<Void>
-    
+
     /// Retrieves detailed information about all categories including their states.
-    /// 
+    ///
     /// - Returns: A result containing an array of category information
     /// - Note: Includes categories that are empty, excluded, or have no avatar files
     func getCategoryInfo() -> OutfitPickerResult<[CategoryInfo]>
-    
+
     /// Retrieves references to all non-excluded categories.
-    /// 
+    ///
     /// - Returns: A result containing an array of category references
     /// - Note: Excludes user-excluded categories but includes empty categories
     func getCategories() -> OutfitPickerResult<[CategoryReference]>
-    
+
     /// Gets the count of available (unworn) outfits in a category.
-    /// 
+    ///
     /// - Parameter categoryName: The name of the category to check
     /// - Returns: A result containing the count of available outfits
     /// - Note: Returns total count if rotation is complete, otherwise returns unworn count
     func getAvailableCount(for categoryName: String) -> OutfitPickerResult<Int>
-    
+
     /// Resets the worn outfit list for a specific category.
-    /// 
+    ///
     /// - Parameter categoryName: The name of the category to reset
     /// - Returns: A result indicating success or failure
     func resetCategory(_ categoryName: String) -> OutfitPickerResult<Void>
-    
+
     /// Resets the worn outfit lists for all categories.
-    /// 
+    ///
     /// - Returns: A result indicating success or failure
     func resetAllCategories() -> OutfitPickerResult<Void>
-    
+
     /// Partially resets a category to have only the specified number of worn outfits.
-    /// 
+    ///
     /// - Parameters:
     ///   - categoryName: The name of the category to partially reset
     ///   - wornCount: The number of outfits to keep as worn
     /// - Returns: A result indicating success or failure
     /// - Note: Has no effect if wornCount >= total outfit count
-    func partialReset(categoryName: String, wornCount: Int) -> OutfitPickerResult<Void>
-    
+    func partialReset(categoryName: String, wornCount: Int)
+        -> OutfitPickerResult<Void>
+
     /// Retrieves all outfit references from a specific category.
-    /// 
+    ///
     /// - Parameter categoryName: The name of the category to list
     /// - Returns: A result containing an array of all outfit references in the category
-    func showAllOutfits(from categoryName: String) -> OutfitPickerResult<[OutfitReference]>
-    
+    func showAllOutfits(from categoryName: String) -> OutfitPickerResult<
+        [OutfitReference]
+    >
+
     /// Detects changes in the filesystem compared to the stored configuration.
-    /// 
+    ///
     /// - Returns: A result containing detected category and file changes
     /// - Note: Compares current filesystem state with known categories and files
     func detectChanges() -> OutfitPickerResult<CategoryChanges>
-    
+
     /// Updates the configuration with detected changes.
-    /// 
+    ///
     /// - Parameter changes: The category changes to apply to the configuration
     /// - Returns: A result indicating success or failure
     /// - Note: Automatically resets cache for deleted categories
@@ -98,14 +105,14 @@ public protocol OutfitPickerProtocol: Sendable {
 }
 
 /// Async/await version of the outfit picker protocol.
-/// 
+///
 /// This protocol provides the same functionality as `OutfitPickerProtocol` but uses
 /// async/await for better concurrency support and cleaner error handling.
-/// 
+///
 /// ## Usage Example
 /// ```swift
 /// let picker = OutfitPicker(configService: configService, fileManager: FileManager.default)
-/// 
+///
 /// do {
 ///     let outfit = try await picker.showRandomOutfit(from: "casual")
 ///     print("Selected outfit: \(outfit?.fileName ?? "none available")")
@@ -115,49 +122,51 @@ public protocol OutfitPickerProtocol: Sendable {
 /// ```
 public protocol AsyncOutfitPickerProtocol: Sendable {
     /// Shows a random unworn outfit from the specified category.
-    func showRandomOutfit(from categoryName: String) async throws -> OutfitReference?
-    
+    func showRandomOutfit(from categoryName: String) async throws
+        -> OutfitReference?
+
     /// Shows a random unworn outfit from any available category.
     func showRandomOutfitAcrossCategories() async throws -> OutfitReference?
-    
+
     /// Marks an outfit as worn by adding it to the category's worn list.
     func wearOutfit(_ outfit: OutfitReference) async throws
-    
+
     /// Retrieves detailed information about all categories including their states.
     func getCategoryInfo() async throws -> [CategoryInfo]
-    
+
     /// Retrieves references to all non-excluded categories.
     func getCategories() async throws -> [CategoryReference]
-    
+
     /// Gets the count of available (unworn) outfits in a category.
     func getAvailableCount(for categoryName: String) async throws -> Int
-    
+
     /// Resets the worn outfit list for a specific category.
     func resetCategory(_ categoryName: String) async throws
-    
+
     /// Resets the worn outfit lists for all categories.
     func resetAllCategories() async throws
-    
+
     /// Partially resets a category to have only the specified number of worn outfits.
     func partialReset(categoryName: String, wornCount: Int) async throws
-    
+
     /// Retrieves all outfit references from a specific category.
-    func showAllOutfits(from categoryName: String) async throws -> [OutfitReference]
-    
+    func showAllOutfits(from categoryName: String) async throws
+        -> [OutfitReference]
+
     /// Detects changes in the filesystem compared to the stored configuration.
     func detectChanges() async throws -> CategoryChanges
-    
+
     /// Updates the configuration with detected changes.
     func updateConfig(with changes: CategoryChanges) async throws
 }
 
 /// Protocol abstracting FileManager operations for testability.
-/// 
+///
 /// This protocol wraps essential FileManager methods used by the outfit picker,
 /// allowing for dependency injection and easier unit testing.
 public protocol FileManagerProtocol: Sendable {
     /// Lists the contents of a directory.
-    /// 
+    ///
     /// - Parameters:
     ///   - url: The directory URL to enumerate
     ///   - keys: Resource keys to include in the enumeration
@@ -169,9 +178,9 @@ public protocol FileManagerProtocol: Sendable {
         includingPropertiesForKeys keys: [URLResourceKey]?,
         options mask: FileManager.DirectoryEnumerationOptions
     ) throws -> [URL]
-    
+
     /// Checks if a file exists at the specified path.
-    /// 
+    ///
     /// - Parameters:
     ///   - path: The file path to check
     ///   - isDirectory: Optional pointer to receive directory status
@@ -180,9 +189,9 @@ public protocol FileManagerProtocol: Sendable {
         atPath path: String,
         isDirectory: UnsafeMutablePointer<ObjCBool>?
     ) -> Bool
-    
+
     /// Returns URLs for the specified search path directory.
-    /// 
+    ///
     /// - Parameters:
     ///   - directory: The search path directory type
     ///   - domainMark: The domain mask for the search
@@ -191,9 +200,9 @@ public protocol FileManagerProtocol: Sendable {
         for directory: FileManager.SearchPathDirectory,
         in domainMark: FileManager.SearchPathDomainMask
     ) -> [URL]
-    
+
     /// Creates a directory at the specified URL.
-    /// 
+    ///
     /// - Parameters:
     ///   - url: The URL where the directory should be created
     ///   - createIntermediates: Whether to create intermediate directories
@@ -204,9 +213,9 @@ public protocol FileManagerProtocol: Sendable {
         withIntermediateDirectories createIntermediates: Bool,
         attributes: [FileAttributeKey: Any]?
     ) throws
-    
+
     /// Removes the item at the specified URL.
-    /// 
+    ///
     /// - Parameter URL: The URL of the item to remove
     /// - Throws: FileManager errors if the item cannot be removed
     func removeItem(at URL: URL) throws
@@ -215,10 +224,10 @@ public protocol FileManagerProtocol: Sendable {
 extension FileManager: FileManagerProtocol {}
 
 /// Main implementation of the outfit picker functionality.
-/// 
+///
 /// This struct coordinates between configuration, cache, and file system services
 /// to provide outfit selection and management capabilities.
-/// 
+///
 /// ## Usage Example
 /// ```swift
 /// let configService = ConfigService(directoryProvider: DefaultDirectoryProvider())
@@ -226,17 +235,19 @@ extension FileManager: FileManagerProtocol {}
 ///     configService: configService,
 ///     fileManager: FileManager.default
 /// )
-/// 
+///
 /// // Use the picker methods
 /// let result = picker.showRandomOutfit(from: "casual")
 /// ```
-public struct OutfitPicker: OutfitPickerProtocol, AsyncOutfitPickerProtocol, @unchecked Sendable {
+public struct OutfitPicker: OutfitPickerProtocol, AsyncOutfitPickerProtocol,
+    @unchecked Sendable
+{
     private let configService: ConfigServiceProtocol
     private let cacheService: CacheServiceProtocol
     private let fileManager: FileManagerProtocol
 
     /// Initializes a new outfit picker with the specified services.
-    /// 
+    ///
     /// - Parameters:
     ///   - configService: Service for loading and saving configuration
     ///   - cacheService: Service for managing worn outfit cache (defaults to CacheService())
@@ -250,7 +261,7 @@ public struct OutfitPicker: OutfitPickerProtocol, AsyncOutfitPickerProtocol, @un
         self.cacheService = cacheService
         self.fileManager = fileManager
     }
-    
+
     // MARK: - Public API Methods
 
     public func showRandomOutfit(from categoryName: String)
@@ -757,7 +768,9 @@ public struct OutfitPicker: OutfitPickerProtocol, AsyncOutfitPickerProtocol, @un
 // MARK: - Async/Await Implementation
 
 extension OutfitPicker {
-    public func showRandomOutfit(from categoryName: String) async throws -> OutfitReference? {
+    public func showRandomOutfit(from categoryName: String) async throws
+        -> OutfitReference?
+    {
         return try await withCheckedThrowingContinuation { continuation in
             let result = showRandomOutfit(from: categoryName)
             switch result {
@@ -768,8 +781,10 @@ extension OutfitPicker {
             }
         }
     }
-    
-    public func showRandomOutfitAcrossCategories() async throws -> OutfitReference? {
+
+    public func showRandomOutfitAcrossCategories() async throws
+        -> OutfitReference?
+    {
         return try await withCheckedThrowingContinuation { continuation in
             let result = showRandomOutfitAcrossCategories()
             switch result {
@@ -780,7 +795,7 @@ extension OutfitPicker {
             }
         }
     }
-    
+
     public func wearOutfit(_ outfit: OutfitReference) async throws {
         return try await withCheckedThrowingContinuation { continuation in
             let result = wearOutfit(outfit)
@@ -792,7 +807,7 @@ extension OutfitPicker {
             }
         }
     }
-    
+
     public func getCategoryInfo() async throws -> [CategoryInfo] {
         return try await withCheckedThrowingContinuation { continuation in
             let result = getCategoryInfo()
@@ -804,7 +819,7 @@ extension OutfitPicker {
             }
         }
     }
-    
+
     public func getCategories() async throws -> [CategoryReference] {
         return try await withCheckedThrowingContinuation { continuation in
             let result = getCategories()
@@ -816,8 +831,9 @@ extension OutfitPicker {
             }
         }
     }
-    
-    public func getAvailableCount(for categoryName: String) async throws -> Int {
+
+    public func getAvailableCount(for categoryName: String) async throws -> Int
+    {
         return try await withCheckedThrowingContinuation { continuation in
             let result = getAvailableCount(for: categoryName)
             switch result {
@@ -828,7 +844,7 @@ extension OutfitPicker {
             }
         }
     }
-    
+
     public func resetCategory(_ categoryName: String) async throws {
         return try await withCheckedThrowingContinuation { continuation in
             let result = resetCategory(categoryName)
@@ -840,7 +856,7 @@ extension OutfitPicker {
             }
         }
     }
-    
+
     public func resetAllCategories() async throws {
         return try await withCheckedThrowingContinuation { continuation in
             let result = resetAllCategories()
@@ -852,10 +868,14 @@ extension OutfitPicker {
             }
         }
     }
-    
-    public func partialReset(categoryName: String, wornCount: Int) async throws {
+
+    public func partialReset(categoryName: String, wornCount: Int) async throws
+    {
         return try await withCheckedThrowingContinuation { continuation in
-            let result = partialReset(categoryName: categoryName, wornCount: wornCount)
+            let result = partialReset(
+                categoryName: categoryName,
+                wornCount: wornCount
+            )
             switch result {
             case .success:
                 continuation.resume()
@@ -864,8 +884,10 @@ extension OutfitPicker {
             }
         }
     }
-    
-    public func showAllOutfits(from categoryName: String) async throws -> [OutfitReference] {
+
+    public func showAllOutfits(from categoryName: String) async throws
+        -> [OutfitReference]
+    {
         return try await withCheckedThrowingContinuation { continuation in
             let result = showAllOutfits(from: categoryName)
             switch result {
@@ -876,7 +898,7 @@ extension OutfitPicker {
             }
         }
     }
-    
+
     public func detectChanges() async throws -> CategoryChanges {
         return try await withCheckedThrowingContinuation { continuation in
             let result = detectChanges()
@@ -888,7 +910,7 @@ extension OutfitPicker {
             }
         }
     }
-    
+
     public func updateConfig(with changes: CategoryChanges) async throws {
         return try await withCheckedThrowingContinuation { continuation in
             let result = updateConfig(with: changes)

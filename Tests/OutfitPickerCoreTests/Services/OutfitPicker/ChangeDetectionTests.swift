@@ -21,12 +21,15 @@ struct ChangeDetectionTests {
             knownCategories: ["A", "B"],
             knownCategoryFiles: [:]
         )
-        let fs = makeFS(root: root, categories: [
-            "A": ["a1.avatar"],
-            "B": ["b1.avatar"],
-            "C": ["c1.avatar"],
-        ])
-        
+        let fs = makeFS(
+            root: root,
+            categories: [
+                "A": ["a1.avatar"],
+                "B": ["b1.avatar"],
+                "C": ["c1.avatar"],
+            ]
+        )
+
         let env = try makeOutfitPickerSUT(
             root: root,
             config: config,
@@ -59,11 +62,14 @@ struct ChangeDetectionTests {
                 "B": ["b1.avatar"],
             ]
         )
-        let fs = makeFS(root: root, categories: [
-            "A": ["old2.avatar", "newA.avatar"],
-            "B": [],
-        ])
-        
+        let fs = makeFS(
+            root: root,
+            categories: [
+                "A": ["old2.avatar", "newA.avatar"],
+                "B": [],
+            ]
+        )
+
         let env = try makeOutfitPickerSUT(
             root: root,
             config: config,
@@ -78,7 +84,9 @@ struct ChangeDetectionTests {
         #expect(changes.changedCategories == Set(["A", "B"]))
         #expect(changes.addedFiles["A"] == Set(["newA.avatar"]))
         #expect(changes.deletedFiles["A"] == Set(["old1.avatar"]))
-        #expect(changes.addedFiles["B"] == nil || changes.addedFiles["B"]!.isEmpty)
+        #expect(
+            changes.addedFiles["B"] == nil || changes.addedFiles["B"]!.isEmpty
+        )
         #expect(changes.deletedFiles["B"] == Set(["b1.avatar"]))
     }
 
@@ -95,7 +103,7 @@ struct ChangeDetectionTests {
             knownCategoryFiles: ["Solo": ["x.avatar"]]
         )
         let fs = makeFS(root: root, categories: ["Solo": ["x.avatar"]])
-        
+
         let env = try makeOutfitPickerSUT(
             root: root,
             config: config,
@@ -116,7 +124,7 @@ struct ChangeDetectionTests {
     @Test("detectChanges maps ConfigError via OutfitPickerError.from")
     func detectChanges_mapsConfigError() {
         let sut = makeOutfitPickerSUTWithConfigError(ConfigError.missingRoot)
-        
+
         #expect(throws: OutfitPickerError.invalidConfiguration) {
             _ = try sut.detectChanges().get()
         }
@@ -136,17 +144,27 @@ struct ChangeDetectionTests {
             knownCategories: ["Old"],
             knownCategoryFiles: ["Old": ["old1.avatar"]]
         )
-        let fs = makeFS(root: root, categories: ["NewCat": ["one.avatar", "two.avatar"]])
+        let fs = makeFS(
+            root: root,
+            categories: ["NewCat": ["one.avatar", "two.avatar"]]
+        )
         let cache = OutfitCache(categories: [
             "NewCat": .init(wornOutfits: ["one.avatar"], totalOutfits: 2)
         ])
-        
+
         let configSvc = CapturingConfigService(initial: original)
         let cacheSvc = FakeCacheService(.ok(cache))
-        let fm = FakeFileManager(.ok(fs.contents), directories: Array(fs.directories))
-        
-        let sut = OutfitPicker(configService: configSvc, cacheService: cacheSvc, fileManager: fm)
-        
+        let fm = FakeFileManager(
+            .ok(fs.contents),
+            directories: Array(fs.directories)
+        )
+
+        let sut = OutfitPicker(
+            configService: configSvc,
+            cacheService: cacheSvc,
+            fileManager: fm
+        )
+
         let changes = CategoryChanges(
             newCategories: ["NewCat"],
             deletedCategories: [],
@@ -164,7 +182,10 @@ struct ChangeDetectionTests {
         #expect(saved.language == original.language)
         #expect(saved.excludedCategories == original.excludedCategories)
         #expect(saved.knownCategories == Set(["NewCat"]))
-        #expect(saved.knownCategoryFiles["NewCat"] == Set(["one.avatar", "two.avatar"]))
+        #expect(
+            saved.knownCategoryFiles["NewCat"]
+                == Set(["one.avatar", "two.avatar"])
+        )
         #expect(cacheSvc.saved.isEmpty)
     }
 
@@ -182,13 +203,20 @@ struct ChangeDetectionTests {
         let initialCache = OutfitCache(categories: [
             "Cat": .init(wornOutfits: ["one.avatar"], totalOutfits: 3)
         ])
-        
+
         let configSvc = CapturingConfigService(initial: original)
         let cacheSvc = FakeCacheService(.ok(initialCache))
-        let fm = FakeFileManager(.ok(fs.contents), directories: Array(fs.directories))
-        
-        let sut = OutfitPicker(configService: configSvc, cacheService: cacheSvc, fileManager: fm)
-        
+        let fm = FakeFileManager(
+            .ok(fs.contents),
+            directories: Array(fs.directories)
+        )
+
+        let sut = OutfitPicker(
+            configService: configSvc,
+            cacheService: cacheSvc,
+            fileManager: fm
+        )
+
         let changes = CategoryChanges(
             newCategories: [],
             deletedCategories: ["OldCategory"],
@@ -201,11 +229,13 @@ struct ChangeDetectionTests {
 
         #expect(configSvc.saved.count == 1)
         #expect(cacheSvc.saved.count == 1)
-        
+
         let resetCache = try #require(cacheSvc.saved.first)
         #expect(resetCache.version == initialCache.version)
         #expect(resetCache.createdAt == initialCache.createdAt)
-        #expect(Set(resetCache.categories.keys) == Set(initialCache.categories.keys))
+        #expect(
+            Set(resetCache.categories.keys) == Set(initialCache.categories.keys)
+        )
 
         for (name, before) in initialCache.categories {
             let after = try #require(resetCache.categories[name])
@@ -226,10 +256,10 @@ struct ChangeDetectionTests {
             knownCategories: ["X"],
             knownCategoryFiles: ["X": ["old.avatar"]]
         )
-        
+
         let rootURL = URL(filePath: root, directoryHint: .isDirectory)
         let xDir = rootURL.appending(path: "X", directoryHint: .isDirectory)
-        
+
         let env = try makeOutfitPickerSUT(
             root: root,
             config: config,

@@ -72,7 +72,8 @@ struct RandomOutfitTests {
 
     // MARK: - Rotation reset
 
-    @Test func allWorn_resetsCategoryCache_thenReturnsFromAll_savesOnce() throws {
+    @Test func allWorn_resetsCategoryCache_thenReturnsFromAll_savesOnce() throws
+    {
         let files = ["only.avatar"]
         let cache = OutfitCache(categories: [
             "Latex": CategoryCache(

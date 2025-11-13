@@ -18,8 +18,15 @@ struct FileSystemErrorTests {
     @Test
     func equatableSemantics() {
         testEquatableSemantics(
-            equal: [(FileSystemError.operationFailed, FileSystemError.operationFailed)],
-            notEqual: [(FileSystemError.operationFailed, FileSystemError.invalidPath)]
+            equal: [
+                (
+                    FileSystemError.operationFailed,
+                    FileSystemError.operationFailed
+                )
+            ],
+            notEqual: [
+                (FileSystemError.operationFailed, FileSystemError.invalidPath)
+            ]
         )
     }
 }

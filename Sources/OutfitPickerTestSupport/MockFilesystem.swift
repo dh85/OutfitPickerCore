@@ -2,7 +2,7 @@ import Foundation
 import OutfitPickerCore
 
 /// Mock filesystem utilities for OutfitPicker testing.
-/// 
+///
 /// This module provides functions to create mock filesystem structures
 /// that can be used with fake file managers for isolated testing.
 
@@ -70,7 +70,9 @@ public func makeFS(
 
     for (name, files) in categories {
         let d = rootURL.appending(path: name, directoryHint: .isDirectory)
-        map[d] = files.map { d.appending(path: $0, directoryHint: .notDirectory) }
+        map[d] = files.map {
+            d.appending(path: $0, directoryHint: .notDirectory)
+        }
     }
 
     return (rootURL, map, dirs)

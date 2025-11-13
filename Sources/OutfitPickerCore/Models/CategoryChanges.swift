@@ -47,7 +47,8 @@ public struct CategoryChanges: Sendable, Equatable {
 
     /// Whether no changes were detected
     public var isEmpty: Bool {
-        newCategories.isEmpty && deletedCategories.isEmpty && changedCategories.isEmpty
+        newCategories.isEmpty && deletedCategories.isEmpty
+            && changedCategories.isEmpty
             && addedFiles.isEmpty && deletedFiles.isEmpty
     }
 }

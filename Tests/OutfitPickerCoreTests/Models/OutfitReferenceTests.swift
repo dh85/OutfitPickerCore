@@ -5,14 +5,15 @@ import Testing
 @testable import OutfitPickerCore
 
 struct OutfitReferenceTests {
-    
+
     @Test("filePath behavior")
     func filePathBehavior() {
-        let testCases: [(fileName: String, categoryPath: String, expectedPath: String)] = [
-            ("shirt.avatar", "/test/path", "/test/path/shirt.avatar"),
-            ("jeans.avatar", "/test/path/", "/test/path/jeans.avatar")
-        ]
-        
+        let testCases:
+            [(fileName: String, categoryPath: String, expectedPath: String)] = [
+                ("shirt.avatar", "/test/path", "/test/path/shirt.avatar"),
+                ("jeans.avatar", "/test/path/", "/test/path/jeans.avatar"),
+            ]
+
         for (fileName, categoryPath, expectedPath) in testCases {
             let outfit = OutfitReference(
                 fileName: fileName,

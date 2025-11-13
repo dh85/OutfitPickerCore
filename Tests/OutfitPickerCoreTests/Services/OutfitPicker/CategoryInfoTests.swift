@@ -11,22 +11,51 @@ struct CategoryInfoTests {
     // MARK: - Happy-path behaviour
 
     @Test
-    func mixedStates_excludedEmptyNoAvatarAndHasOutfits_sortedAlphabetically() throws {
+    func mixedStates_excludedEmptyNoAvatarAndHasOutfits_sortedAlphabetically()
+        throws
+    {
         let rootURL = URL(filePath: root, directoryHint: .isDirectory)
 
         // Child directories and a non-directory entry
-        let excludedURL = rootURL.appending(path: "Excluded", directoryHint: .isDirectory)
-        let emptyURL = rootURL.appending(path: "Empty", directoryHint: .isDirectory)
-        let docsURL = rootURL.appending(path: "Docs", directoryHint: .isDirectory)
-        let goodURL = rootURL.appending(path: "Good", directoryHint: .isDirectory)
-        let fileLikeURL = rootURL.appending(path: "loose.txt", directoryHint: .notDirectory)
+        let excludedURL = rootURL.appending(
+            path: "Excluded",
+            directoryHint: .isDirectory
+        )
+        let emptyURL = rootURL.appending(
+            path: "Empty",
+            directoryHint: .isDirectory
+        )
+        let docsURL = rootURL.appending(
+            path: "Docs",
+            directoryHint: .isDirectory
+        )
+        let goodURL = rootURL.appending(
+            path: "Good",
+            directoryHint: .isDirectory
+        )
+        let fileLikeURL = rootURL.appending(
+            path: "loose.txt",
+            directoryHint: .notDirectory
+        )
 
         // Files inside category dirs
-        let docsReadme = docsURL.appending(path: "readme.md", directoryHint: .notDirectory)
-        let docsPhoto = docsURL.appending(path: "photo.png", directoryHint: .notDirectory)
+        let docsReadme = docsURL.appending(
+            path: "readme.md",
+            directoryHint: .notDirectory
+        )
+        let docsPhoto = docsURL.appending(
+            path: "photo.png",
+            directoryHint: .notDirectory
+        )
 
-        let goodAvatar = goodURL.appending(path: "g1.avatar", directoryHint: .notDirectory)
-        let goodImage = goodURL.appending(path: "image.png", directoryHint: .notDirectory)
+        let goodAvatar = goodURL.appending(
+            path: "g1.avatar",
+            directoryHint: .notDirectory
+        )
+        let goodImage = goodURL.appending(
+            path: "image.png",
+            directoryHint: .notDirectory
+        )
 
         // File-system layout mapping for contentsOfDirectory
         let contents: [URL: [URL]] = [
@@ -76,7 +105,10 @@ struct CategoryInfoTests {
             let excluded = try #require(info(named: "Excluded"))
             #expect(excluded.state == .userExcluded)
             #expect(excluded.category.outfits.isEmpty)
-            #expect(excluded.category.path == excludedURL.path(percentEncoded: false))
+            #expect(
+                excluded.category.path
+                    == excludedURL.path(percentEncoded: false)
+            )
         }
 
         // Empty → .empty (no files at all)
@@ -145,7 +177,9 @@ struct CategoryInfoTests {
         case .failure(let e):
             #expect(e == .invalidConfiguration)
         case .success:
-            Issue.record("Expected invalidConfiguration when config load fails.")
+            Issue.record(
+                "Expected invalidConfiguration when config load fails."
+            )
         }
     }
 

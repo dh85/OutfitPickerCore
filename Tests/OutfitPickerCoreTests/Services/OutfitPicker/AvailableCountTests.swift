@@ -77,14 +77,18 @@ struct AvailableCountTests {
 
     @Test
     func availableCount_configLoadFailure_mapsToInvalidConfiguration() {
-        let sut = makeOutfitPickerSUTWithConfigError(ConfigError.pathTraversalNotAllowed)
+        let sut = makeOutfitPickerSUTWithConfigError(
+            ConfigError.pathTraversalNotAllowed
+        )
         let result = sut.getAvailableCount(for: "Any")
 
         switch result {
         case .failure(let e):
             #expect(e == .invalidConfiguration)
         case .success:
-            Issue.record("Expected invalidConfiguration when config load fails.")
+            Issue.record(
+                "Expected invalidConfiguration when config load fails."
+            )
         }
     }
 }

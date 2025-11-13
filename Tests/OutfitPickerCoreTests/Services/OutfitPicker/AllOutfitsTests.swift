@@ -11,7 +11,9 @@ struct AllOutfitsTests {
     // MARK: - Happy paths
 
     @Test
-    func showAllOutfits_returnsAllAvatars_sortedAndWithCategoryReference() throws {
+    func showAllOutfits_returnsAllAvatars_sortedAndWithCategoryReference()
+        throws
+    {
         let files = ["b.avatar", "a.avatar"]
         let env = try makeOutfitPickerSUTWithCategory(
             root: root,
@@ -51,20 +53,26 @@ struct AllOutfitsTests {
         case .failure(let e):
             #expect(e == .invalidConfiguration)
         case .success:
-            Issue.record("Expected invalidConfiguration when config load fails.")
+            Issue.record(
+                "Expected invalidConfiguration when config load fails."
+            )
         }
     }
 
     @Test
     func showAllOutfits_fileManagerFailure_mapsToFileSystemError() throws {
-        let sut = try makeOutfitPickerSUTWithFileSystemError(FileSystemError.operationFailed)
+        let sut = try makeOutfitPickerSUTWithFileSystemError(
+            FileSystemError.operationFailed
+        )
         let result = sut.showAllOutfits(from: "Any")
 
         switch result {
         case .failure(let e):
             #expect(e == .fileSystemError)
         case .success:
-            Issue.record("Expected fileSystemError when directory listing fails.")
+            Issue.record(
+                "Expected fileSystemError when directory listing fails."
+            )
         }
     }
 }

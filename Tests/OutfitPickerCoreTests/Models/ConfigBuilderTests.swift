@@ -42,47 +42,68 @@ struct ConfigBuilderTests {
     @Test func categoryOperations() throws {
         let testCases:
             [(
-                name: String, builder: (ConfigBuilder) -> ConfigBuilder, expectedLanguage: String,
+                name: String, builder: (ConfigBuilder) -> ConfigBuilder,
+                expectedLanguage: String,
                 expectedKnown: [String], expectedExcluded: [String]
             )] = [
                 (
                     "excludeCategories",
-                    { $0.language(.french).exclude(categories: ["downloads", "documents"]) }, "fr",
+                    {
+                        $0.language(.french).exclude(categories: [
+                            "downloads", "documents",
+                        ])
+                    }, "fr",
                     [], ["downloads", "documents"]
                 ),
                 (
-                    "excludeCategory", { $0.language(.french).exclude(category: "downloads") },
+                    "excludeCategory",
+                    { $0.language(.french).exclude(category: "downloads") },
                     "fr", [], ["downloads"]
                 ),
                 (
                     "includeCategories",
-                    { $0.language(.italian).include(categories: ["casual", "formal"]) }, "it",
+                    {
+                        $0.language(.italian).include(categories: [
+                            "casual", "formal",
+                        ])
+                    }, "it",
                     ["casual", "formal"], []
                 ),
                 (
-                    "includeCategory", { $0.language(.portuguese).include(category: "summer") },
+                    "includeCategory",
+                    { $0.language(.portuguese).include(category: "summer") },
                     "pt", ["summer"], []
                 ),
             ]
 
         for testCase in testCases {
-            let config = try testCase.builder(ConfigBuilder().rootDirectory("/test/path")).build()
+            let config = try testCase.builder(
+                ConfigBuilder().rootDirectory("/test/path")
+            ).build()
             validateConfig(
-                config, language: testCase.expectedLanguage,
+                config,
+                language: testCase.expectedLanguage,
                 knownCategories: testCase.expectedKnown,
-                excludedCategories: testCase.expectedExcluded)
+                excludedCategories: testCase.expectedExcluded
+            )
         }
     }
 
     @Test func knownCategoriesWithStates() throws {
-        let categories = ["casual": CategoryState.hasOutfits, "formal": CategoryState.empty]
+        let categories = [
+            "casual": CategoryState.hasOutfits, "formal": CategoryState.empty,
+        ]
         let config = try ConfigBuilder()
             .rootDirectory("/test/path")
             .language(.german)
             .knownCategories(categories)
             .build()
 
-        validateConfig(config, language: "de", knownCategories: ["casual", "formal"])
+        validateConfig(
+            config,
+            language: "de",
+            knownCategories: ["casual", "formal"]
+        )
     }
 
     @Test func chaining() throws {
@@ -96,8 +117,11 @@ struct ConfigBuilderTests {
             .build()
 
         validateConfig(
-            config, language: "es", knownCategories: ["casual", "summer", "spring"],
-            excludedCategories: ["winter", "formal", "party"])
+            config,
+            language: "es",
+            knownCategories: ["casual", "summer", "spring"],
+            excludedCategories: ["winter", "formal", "party"]
+        )
     }
 
     @Test func allLanguages() throws {
@@ -125,44 +149,67 @@ struct ConfigBuilderTests {
 
     @Test func variadicAndSequenceOperations() throws {
         let testCases:
-            [(name: String, builder: (ConfigBuilder) -> ConfigBuilder, expectedKnown: [String])] = [
-                ("includeVariadic", { $0.include("a", "b", "c") }, ["a", "b", "c"]),
+            [(
+                name: String, builder: (ConfigBuilder) -> ConfigBuilder,
+                expectedKnown: [String]
+            )] = [
+                (
+                    "includeVariadic", { $0.include("a", "b", "c") },
+                    ["a", "b", "c"]
+                ),
                 (
                     "knownCategoriesSequence",
-                    { $0.knownCategories(["x", "y", "z"].lazy.map { $0 }) }, ["x", "y", "z"]
+                    { $0.knownCategories(["x", "y", "z"].lazy.map { $0 }) },
+                    ["x", "y", "z"]
                 ),
             ]
 
         for testCase in testCases {
-            let config = try testCase.builder(ConfigBuilder().rootDirectory("/test/path")).build()
+            let config = try testCase.builder(
+                ConfigBuilder().rootDirectory("/test/path")
+            ).build()
             validateConfig(config, knownCategories: testCase.expectedKnown)
         }
     }
 
     @Test func excludeVariadicOperations() throws {
         let testCases:
-            [(name: String, builder: (ConfigBuilder) -> ConfigBuilder, expectedExcluded: [String])] =
+            [(
+                name: String, builder: (ConfigBuilder) -> ConfigBuilder,
+                expectedExcluded: [String]
+            )] =
                 [
                     (
-                        "singleAndMultiple", { $0.exclude("downloads", "tmp", "backups") },
+                        "singleAndMultiple",
+                        { $0.exclude("downloads", "tmp", "backups") },
                         ["downloads", "tmp", "backups"]
                     ),
                     (
-                        "withDuplicatesAndWhitespace", { $0.exclude("tmp", "tmp", " logs ") },
+                        "withDuplicatesAndWhitespace",
+                        { $0.exclude("tmp", "tmp", " logs ") },
                         ["tmp", "logs"]
                     ),
                     (
                         "worksAlongsideOtherAPIs",
                         {
-                            $0.exclude(category: "formal").exclude(categories: ["private"]).exclude(
-                                "archive", "tmp")
+                            $0.exclude(category: "formal").exclude(categories: [
+                                "private"
+                            ]).exclude(
+                                "archive",
+                                "tmp"
+                            )
                         }, ["formal", "private", "archive", "tmp"]
                     ),
                 ]
 
         for testCase in testCases {
-            let config = try testCase.builder(ConfigBuilder().rootDirectory("/test/path")).build()
-            validateConfig(config, excludedCategories: testCase.expectedExcluded)
+            let config = try testCase.builder(
+                ConfigBuilder().rootDirectory("/test/path")
+            ).build()
+            validateConfig(
+                config,
+                excludedCategories: testCase.expectedExcluded
+            )
         }
     }
 

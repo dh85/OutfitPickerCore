@@ -2,7 +2,7 @@ import Foundation
 import OutfitPickerCore
 
 /// Fake service implementations for OutfitPicker testing.
-/// 
+///
 /// This module provides fake implementations of core protocols that enable
 /// controlled testing of various scenarios including error conditions.
 
@@ -22,7 +22,8 @@ import OutfitPickerCore
 /// // Error case
 /// let service = FakeConfigService(.throwsError(ConfigError.missingRoot))
 /// ```
-public final class FakeConfigService: ConfigServiceProtocol, @unchecked Sendable {
+public final class FakeConfigService: ConfigServiceProtocol, @unchecked Sendable
+{
     /// Defines the behavior mode for the fake service.
     public enum Mode {
         /// Returns the provided configuration successfully
@@ -190,7 +191,9 @@ public final class FakeFileManager: FileManagerProtocol, @unchecked Sendable {
         secondCallEmptyFor: [URL] = []
     ) {
         self.behavior = behavior
-        self.directories = Set(directories.map { $0.path(percentEncoded: false) })
+        self.directories = Set(
+            directories.map { $0.path(percentEncoded: false) }
+        )
         self.secondCallEmptyFor = Set(
             secondCallEmptyFor.map { $0.path(percentEncoded: false) }
         )

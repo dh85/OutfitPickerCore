@@ -66,7 +66,9 @@ struct FileServiceTests {
     }
 
     @Test func saveMapsErrorWhenDirectoryProviderFails() {
-        let sut = makeTestSUTWithThrowingProvider(errorMapper: { DummyError.mapped })
+        let sut = makeTestSUTWithThrowingProvider(errorMapper: {
+            DummyError.mapped
+        })
 
         #expect(throws: DummyError.mapped) {
             try sut.save(sampleModel())
@@ -74,7 +76,9 @@ struct FileServiceTests {
     }
 
     @Test func filePathMapsError() {
-        let sut = makeTestSUTWithThrowingProvider(errorMapper: { DummyError.mapped })
+        let sut = makeTestSUTWithThrowingProvider(errorMapper: {
+            DummyError.mapped
+        })
         #expect(throws: DummyError.mapped) { _ = try sut.filePath() }
     }
 
@@ -97,7 +101,9 @@ struct FileServiceTests {
     }
 
     @Test func deleteMapsErrorWhenDirectoryProviderFails() {
-        let sut = makeTestSUTWithThrowingProvider(errorMapper: { DummyError.mapped })
+        let sut = makeTestSUTWithThrowingProvider(errorMapper: {
+            DummyError.mapped
+        })
         #expect(throws: DummyError.mapped) { try sut.delete() }
     }
 

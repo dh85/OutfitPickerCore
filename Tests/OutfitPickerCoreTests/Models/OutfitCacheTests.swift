@@ -24,20 +24,32 @@ struct OutfitCacheTests {
         let testCases:
             [(
                 name: String, setup: () -> (OutfitCache, CategoryCache, String),
-                validate: (OutfitCache, OutfitCache, CategoryCache, String) -> Void
+                validate: (OutfitCache, OutfitCache, CategoryCache, String) ->
+                    Void
             )] = [
                 (
                     "existingCategory",
                     {
-                        let categoryCache = makeCache(worn: 2, total: 5, date: fixed)
+                        let categoryCache = makeCache(
+                            worn: 2,
+                            total: 5,
+                            date: fixed
+                        )
                         let original = OutfitCache(
-                            categories: ["/casual": categoryCache], version: 7, createdAt: fixed)
+                            categories: ["/casual": categoryCache],
+                            version: 7,
+                            createdAt: fixed
+                        )
                         let newCache = makeCache(worn: 3, total: 5, date: fixed)
                         return (original, newCache, "/casual")
                     },
                     { updated, original, newCache, category in
                         validateCacheUpdate(
-                            updated, original, category: category, expectedCache: newCache)
+                            updated,
+                            original,
+                            category: category,
+                            expectedCache: newCache
+                        )
                         #expect(original.categories[category] != newCache)
                     }
                 ),
@@ -88,22 +100,34 @@ struct OutfitCacheTests {
     @Test func removingOperations() {
         let testCases:
             [(
-                name: String, setup: () -> (OutfitCache, String), expectedCount: Int,
+                name: String, setup: () -> (OutfitCache, String),
+                expectedCount: Int,
                 shouldRemain: String?
             )] = [
                 (
                     "existingCategory",
                     {
-                        let c1 = CategoryCache(wornOutfits: ["shirt.avatar"], totalOutfits: 3)
-                        let c2 = CategoryCache(wornOutfits: ["suit.avatar"], totalOutfits: 2)
-                        let cache = OutfitCache(categories: ["/casual": c1, "/formal": c2])
+                        let c1 = CategoryCache(
+                            wornOutfits: ["shirt.avatar"],
+                            totalOutfits: 3
+                        )
+                        let c2 = CategoryCache(
+                            wornOutfits: ["suit.avatar"],
+                            totalOutfits: 2
+                        )
+                        let cache = OutfitCache(categories: [
+                            "/casual": c1, "/formal": c2,
+                        ])
                         return (cache, "/formal")
                     }, 1, "/casual"
                 ),
                 (
                     "nonexistentCategory",
                     {
-                        let c1 = CategoryCache(wornOutfits: ["shirt.avatar"], totalOutfits: 3)
+                        let c1 = CategoryCache(
+                            wornOutfits: ["shirt.avatar"],
+                            totalOutfits: 3
+                        )
                         let cache = OutfitCache(categories: ["/casual": c1])
                         return (cache, "/missing")
                     }, 1, "/casual"
@@ -123,32 +147,42 @@ struct OutfitCacheTests {
     }
 
     @Test func resettingOperations() {
-        let testCases: [(name: String, setup: () -> (OutfitCache, String), expectedResult: Bool)] =
-            [
-                (
-                    "existingCategory",
-                    {
-                        let categoryCache = CategoryCache(
-                            wornOutfits: ["shirt.avatar", "jeans.avatar"], totalOutfits: 5)
-                        let cache = OutfitCache(categories: ["/casual": categoryCache])
-                        return (cache, "/casual")
-                    }, true
-                ),
-                (
-                    "missingCategory",
-                    {
-                        let cache = OutfitCache(categories: [:])
-                        return (cache, "/invalid")
-                    }, false
-                ),
-            ]
+        let testCases:
+            [(
+                name: String, setup: () -> (OutfitCache, String),
+                expectedResult: Bool
+            )] =
+                [
+                    (
+                        "existingCategory",
+                        {
+                            let categoryCache = CategoryCache(
+                                wornOutfits: ["shirt.avatar", "jeans.avatar"],
+                                totalOutfits: 5
+                            )
+                            let cache = OutfitCache(categories: [
+                                "/casual": categoryCache
+                            ])
+                            return (cache, "/casual")
+                        }, true
+                    ),
+                    (
+                        "missingCategory",
+                        {
+                            let cache = OutfitCache(categories: [:])
+                            return (cache, "/invalid")
+                        }, false
+                    ),
+                ]
 
         for testCase in testCases {
             let (cache, category) = testCase.setup()
             let reset = cache.resetting(category: category)
 
             if testCase.expectedResult {
-                #expect(reset?.categories[category]?.wornOutfits.isEmpty == true)
+                #expect(
+                    reset?.categories[category]?.wornOutfits.isEmpty == true
+                )
                 #expect(reset?.categories[category]?.totalOutfits == 5)
                 #expect(cache.categories[category]?.wornOutfits.count == 2)
             } else {
@@ -163,11 +197,15 @@ struct OutfitCacheTests {
                 "withCategories",
                 {
                     let cat = CategoryCache(
-                        wornOutfits: ["test.avatar"], totalOutfits: 3,
-                        lastUpdated: Date(timeIntervalSince1970: 2_000_000))
+                        wornOutfits: ["test.avatar"],
+                        totalOutfits: 3,
+                        lastUpdated: Date(timeIntervalSince1970: 2_000_000)
+                    )
                     return OutfitCache(
-                        categories: ["/casual": cat], version: 2,
-                        createdAt: Date(timeIntervalSince1970: 2_000_000))
+                        categories: ["/casual": cat],
+                        version: 2,
+                        createdAt: Date(timeIntervalSince1970: 2_000_000)
+                    )
                 }()
             ),
             ("empty", OutfitCache()),
@@ -180,18 +218,29 @@ struct OutfitCacheTests {
             #expect(decoded.version == testCase.cache.version)
 
             if !testCase.cache.categories.isEmpty {
-                #expect(decoded.categories["/casual"] == testCase.cache.categories["/casual"])
+                #expect(
+                    decoded.categories["/casual"]
+                        == testCase.cache.categories["/casual"]
+                )
                 #expect(
                     abs(
                         decoded.createdAt.timeIntervalSince1970
-                            - testCase.cache.createdAt.timeIntervalSince1970) < 1.0)
+                            - testCase.cache.createdAt.timeIntervalSince1970
+                    ) < 1.0
+                )
             }
         }
     }
 
-    private func makeCache(worn: Int, total: Int, date: Date = Date()) -> CategoryCache {
+    private func makeCache(worn: Int, total: Int, date: Date = Date())
+        -> CategoryCache
+    {
         let outfits = Set((0..<worn).map { "outfit\($0).avatar" })
-        return CategoryCache(wornOutfits: outfits, totalOutfits: total, lastUpdated: date)
+        return CategoryCache(
+            wornOutfits: outfits,
+            totalOutfits: total,
+            lastUpdated: date
+        )
     }
 
     private func roundTrip<T: Codable>(_ value: T) throws -> T {

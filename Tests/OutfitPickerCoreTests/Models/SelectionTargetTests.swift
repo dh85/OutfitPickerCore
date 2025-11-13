@@ -5,16 +5,16 @@ import Testing
 @testable import OutfitPickerCore
 
 struct SelectionTargetTests {
-    
+
     @Test("pattern matching")
     func patternMatching() {
         let cat = CategoryReference(name: "casual", path: "/root/casual")
         let targets: [SelectionTarget] = [
             .category(cat),
             .allCategories,
-            .categories([cat])
+            .categories([cat]),
         ]
-        
+
         switch targets[0] {
         case .category(let c):
             #expect(c == cat)

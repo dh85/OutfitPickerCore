@@ -47,13 +47,17 @@ struct RotationResetTests {
         case .failure(let e):
             #expect(e == .invalidConfiguration)
         case .success:
-            Issue.record("Expected invalidConfiguration when config load fails.")
+            Issue.record(
+                "Expected invalidConfiguration when config load fails."
+            )
         }
     }
 
     @Test
     func resetCategory_cacheLoadFailure_mapsToCacheError() throws {
-        let sut = try makeOutfitPickerSUTWithCacheError(CacheError.decodingFailed)
+        let sut = try makeOutfitPickerSUTWithCacheError(
+            CacheError.decodingFailed
+        )
         let result = sut.resetCategory("Casual")
 
         switch result {
@@ -83,14 +87,18 @@ struct RotationResetTests {
 
     @Test
     func resetAllCategories_configLoadFailure_mapsToInvalidConfiguration() {
-        let sut = makeOutfitPickerSUTWithConfigError(ConfigError.pathTraversalNotAllowed)
+        let sut = makeOutfitPickerSUTWithConfigError(
+            ConfigError.pathTraversalNotAllowed
+        )
         let result = sut.resetAllCategories()
 
         switch result {
         case .failure(let e):
             #expect(e == .invalidConfiguration)
         case .success:
-            Issue.record("Expected invalidConfiguration when config load fails.")
+            Issue.record(
+                "Expected invalidConfiguration when config load fails."
+            )
         }
     }
 
@@ -112,7 +120,10 @@ struct RotationResetTests {
             cache: existingCache
         )
 
-        try #require(env.sut.partialReset(categoryName: "DateNight", wornCount: 2).get() == ())
+        try #require(
+            env.sut.partialReset(categoryName: "DateNight", wornCount: 2).get()
+                == ()
+        )
         #expect(env.cache.saved.isEmpty)  // guard fails → early success, no save
     }
 
@@ -133,7 +144,9 @@ struct RotationResetTests {
             cache: existingCache
         )
 
-        try #require(env.sut.partialReset(categoryName: "Chic", wornCount: 1).get() == ())
+        try #require(
+            env.sut.partialReset(categoryName: "Chic", wornCount: 1).get() == ()
+        )
 
         #expect(env.cache.saved.count == 1)
         let saved = try #require(env.cache.saved.first)
@@ -144,7 +157,8 @@ struct RotationResetTests {
     }
 
     @Test
-    func partialReset_forCategoryWithoutExistingCache_stillWritesCache() throws {
+    func partialReset_forCategoryWithoutExistingCache_stillWritesCache() throws
+    {
         let files = ["x.avatar", "y.avatar"]
         let env = try makeOutfitPickerSUTWithCategory(
             root: root,
@@ -153,7 +167,10 @@ struct RotationResetTests {
             cache: OutfitCache()  // no entry for "Latex"
         )
 
-        try #require(env.sut.partialReset(categoryName: "Latex", wornCount: 0).get() == ())
+        try #require(
+            env.sut.partialReset(categoryName: "Latex", wornCount: 0).get()
+                == ()
+        )
 
         #expect(env.cache.saved.count == 1)
         let saved = try #require(env.cache.saved.first)
@@ -171,7 +188,9 @@ struct RotationResetTests {
         case .failure(let e):
             #expect(e == .invalidConfiguration)
         case .success:
-            Issue.record("Expected invalidConfiguration when config load fails.")
+            Issue.record(
+                "Expected invalidConfiguration when config load fails."
+            )
         }
     }
 }

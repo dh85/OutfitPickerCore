@@ -8,15 +8,24 @@ struct CategoryTests {
 
     private func validateCategoryName(_ path: String, expected: String) {
         let category = Category(path: path, outfits: [])
-        let foundationExpected = URL(filePath: path, directoryHint: .isDirectory).lastPathComponent
+        let foundationExpected = URL(
+            filePath: path,
+            directoryHint: .isDirectory
+        ).lastPathComponent
         #expect(category.name == expected)
         #expect(category.name == foundationExpected)
     }
 
-    private func validateFileEntry(_ filePath: String, expectedFile: String, expectedName: String) {
+    private func validateFileEntry(
+        _ filePath: String,
+        expectedFile: String,
+        expectedName: String
+    ) {
         let entry = FileEntry(filePath: filePath)
         let url = URL(filePath: filePath, directoryHint: .notDirectory)
-        let expectedDir = url.deletingLastPathComponent().path(percentEncoded: false)
+        let expectedDir = url.deletingLastPathComponent().path(
+            percentEncoded: false
+        )
 
         #expect(entry.categoryPath == expectedDir)
         #expect(entry.fileName == expectedFile)
@@ -35,7 +44,10 @@ struct CategoryTests {
                 ("\\\\server\\share\\outfits\\summer", "summer"),
                 ("C:\\single", "single"),
                 ("noseparator", "noseparator"),
-                ("C:\\Users\\John Doe\\My Outfits\\posh leather", "posh leather"),
+                (
+                    "C:\\Users\\John Doe\\My Outfits\\posh leather",
+                    "posh leather"
+                ),
                 ("C:\\Users\\John\\outfits\\casual\\", "casual"),
             ]
         #else
@@ -62,14 +74,29 @@ struct CategoryTests {
     func fileEntryProperties() {
         #if os(Windows)
             let testCases = [
-                ("C:\\Users\\John\\outfits\\casual\\outfit1.avatar", "outfit1.avatar", "casual"),
-                ("C:/Users/John/outfits/formal/suit.avatar", "suit.avatar", "formal"),
-                ("\\\\server\\share\\outfits\\summer\\shorts.avatar", "shorts.avatar", "summer"),
+                (
+                    "C:\\Users\\John\\outfits\\casual\\outfit1.avatar",
+                    "outfit1.avatar", "casual"
+                ),
+                (
+                    "C:/Users/John/outfits/formal/suit.avatar", "suit.avatar",
+                    "formal"
+                ),
+                (
+                    "\\\\server\\share\\outfits\\summer\\shorts.avatar",
+                    "shorts.avatar", "summer"
+                ),
             ]
         #else
             let testCases = [
-                ("/Users/john/outfits/casual/outfit1.avatar", "outfit1.avatar", "casual"),
-                ("/home/user/clothes/formal/suit.avatar", "suit.avatar", "formal"),
+                (
+                    "/Users/john/outfits/casual/outfit1.avatar",
+                    "outfit1.avatar", "casual"
+                ),
+                (
+                    "/home/user/clothes/formal/suit.avatar", "suit.avatar",
+                    "formal"
+                ),
                 (
                     "/Users/john doe/My Outfits/summer clothes/blue shirt.avatar",
                     "blue shirt.avatar", "summer clothes"
@@ -79,7 +106,11 @@ struct CategoryTests {
         #endif
 
         for (filePath, expectedFile, expectedName) in testCases {
-            validateFileEntry(filePath, expectedFile: expectedFile, expectedName: expectedName)
+            validateFileEntry(
+                filePath,
+                expectedFile: expectedFile,
+                expectedName: expectedName
+            )
         }
     }
 
@@ -117,10 +148,16 @@ struct CategoryTests {
             let file = dir + "/花 avatar.avatar"
         #endif
 
-        let expectedDirName = URL(filePath: dir, directoryHint: .isDirectory).lastPathComponent
-        let expectedFileName = URL(filePath: file, directoryHint: .notDirectory).lastPathComponent
+        let expectedDirName = URL(filePath: dir, directoryHint: .isDirectory)
+            .lastPathComponent
+        let expectedFileName = URL(filePath: file, directoryHint: .notDirectory)
+            .lastPathComponent
 
         validateCategoryName(dir, expected: expectedDirName)
-        validateFileEntry(file, expectedFile: expectedFileName, expectedName: expectedDirName)
+        validateFileEntry(
+            file,
+            expectedFile: expectedFileName,
+            expectedName: expectedDirName
+        )
     }
 }

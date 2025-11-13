@@ -1,6 +1,7 @@
-@testable import OutfitPickerCore
 import Foundation
 import OutfitPickerTestSupport
+
+@testable import OutfitPickerCore
 
 // MARK: - Common Test Environment
 
@@ -24,13 +25,13 @@ func makeOutfitPickerSUT(
     let configSvc = FakeConfigService(.ok(actualConfig))
     let cacheSvc = FakeCacheService(.ok(cache))
     let fm = FakeFileManager(.ok(fileSystem), directories: directories)
-    
+
     let sut = OutfitPicker(
         configService: configSvc,
         cacheService: cacheSvc,
         fileManager: fm
     )
-    
+
     return OutfitPickerTestEnv(
         sut: sut,
         fileManager: fm,
@@ -48,7 +49,7 @@ func makeOutfitPickerSUTWithCategory(
 ) throws -> OutfitPickerTestEnv {
     let fs = makeFS(root: root, categories: [category: files])
     let actualConfig = try config ?? Config(root: root, language: "en")
-    
+
     return try makeOutfitPickerSUT(
         root: root,
         config: actualConfig,
@@ -77,7 +78,9 @@ func makeOutfitPickerSUTWithCacheError(_ error: Error) throws -> OutfitPicker {
     )
 }
 
-func makeOutfitPickerSUTWithFileSystemError(_ error: Error) throws -> OutfitPicker {
+func makeOutfitPickerSUTWithFileSystemError(_ error: Error) throws
+    -> OutfitPicker
+{
     let config = try Config(root: "/Users/test/Outfits", language: "en")
     return OutfitPicker(
         configService: FakeConfigService(.ok(config)),
@@ -88,11 +91,13 @@ func makeOutfitPickerSUTWithFileSystemError(_ error: Error) throws -> OutfitPick
 
 // MARK: - Reference Helpers
 
-func makeOutfitReference(root: String, category: String, fileName: String) -> OutfitReference {
+func makeOutfitReference(root: String, category: String, fileName: String)
+    -> OutfitReference
+{
     let categoryPath = URL(filePath: root, directoryHint: .isDirectory)
         .appending(path: category, directoryHint: .isDirectory)
         .path(percentEncoded: false)
-    
+
     let categoryRef = CategoryReference(name: category, path: categoryPath)
     return OutfitReference(fileName: fileName, category: categoryRef)
 }

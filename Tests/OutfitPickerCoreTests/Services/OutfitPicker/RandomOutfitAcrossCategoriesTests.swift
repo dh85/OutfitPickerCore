@@ -101,9 +101,18 @@ struct RandomOutfitAcrossCategoriesTests {
 
     @Test func across_ignoresNonDirectoryEntriesAtRoot() throws {
         let rootURL = URL(filePath: root, directoryHint: .isDirectory)
-        let goodURL = rootURL.appending(path: "Good", directoryHint: .isDirectory)
-        let goodFile = goodURL.appending(path: "g1.avatar", directoryHint: .notDirectory)
-        let junkURL = rootURL.appending(path: "notes.txt", directoryHint: .notDirectory)
+        let goodURL = rootURL.appending(
+            path: "Good",
+            directoryHint: .isDirectory
+        )
+        let goodFile = goodURL.appending(
+            path: "g1.avatar",
+            directoryHint: .notDirectory
+        )
+        let junkURL = rootURL.appending(
+            path: "notes.txt",
+            directoryHint: .notDirectory
+        )
 
         let contents: [URL: [URL]] = [
             rootURL: [goodURL, junkURL],
@@ -117,7 +126,9 @@ struct RandomOutfitAcrossCategoriesTests {
             directories: [rootURL, goodURL]
         )
 
-        let ref = try #require(try env.sut.showRandomOutfitAcrossCategories().get())
+        let ref = try #require(
+            try env.sut.showRandomOutfitAcrossCategories().get()
+        )
 
         #expect(ref.category.name == "Good")
         #expect(ref.fileName == "g1.avatar")
@@ -129,8 +140,14 @@ struct RandomOutfitAcrossCategoriesTests {
 
     @Test func across_skipsCategoryIfFilesDisappearBetweenScanAndPick() throws {
         let rootURL = URL(filePath: root, directoryHint: .isDirectory)
-        let goodURL = rootURL.appending(path: "Good", directoryHint: .isDirectory)
-        let goodFile = goodURL.appending(path: "g1.avatar", directoryHint: .notDirectory)
+        let goodURL = rootURL.appending(
+            path: "Good",
+            directoryHint: .isDirectory
+        )
+        let goodFile = goodURL.appending(
+            path: "g1.avatar",
+            directoryHint: .notDirectory
+        )
 
         let contents: [URL: [URL]] = [
             rootURL: [goodURL],
@@ -161,7 +178,9 @@ struct RandomOutfitAcrossCategoriesTests {
     }
 
     @Test func across_failure_configLoad_mapsToInvalidConfiguration() {
-        let sut = makeOutfitPickerSUTWithConfigError(ConfigError.pathTraversalNotAllowed)
+        let sut = makeOutfitPickerSUTWithConfigError(
+            ConfigError.pathTraversalNotAllowed
+        )
         let result = sut.showRandomOutfitAcrossCategories()
 
         switch result {
@@ -173,7 +192,9 @@ struct RandomOutfitAcrossCategoriesTests {
     }
 
     @Test func across_failure_rootListing_mapsToFileSystemError() throws {
-        let sut = try makeOutfitPickerSUTWithFileSystemError(FileSystemError.operationFailed)
+        let sut = try makeOutfitPickerSUTWithFileSystemError(
+            FileSystemError.operationFailed
+        )
         let result = sut.showRandomOutfitAcrossCategories()
 
         switch result {
@@ -188,8 +209,13 @@ struct RandomOutfitAcrossCategoriesTests {
         let fs = makeFS(root: root, categories: ["Good": ["g1.avatar"]])
         let config = try Config(root: root, language: "en")
         let configSvc = FakeConfigService(.ok(config))
-        let cacheSvc = FakeCacheService(.throwsOnLoad(CacheError.decodingFailed))
-        let fm = FakeFileManager(.ok(fs.contents), directories: Array(fs.directories))
+        let cacheSvc = FakeCacheService(
+            .throwsOnLoad(CacheError.decodingFailed)
+        )
+        let fm = FakeFileManager(
+            .ok(fs.contents),
+            directories: Array(fs.directories)
+        )
 
         let sut = OutfitPicker(
             configService: configSvc,

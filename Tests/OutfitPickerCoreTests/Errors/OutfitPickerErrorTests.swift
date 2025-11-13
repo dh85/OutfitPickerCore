@@ -7,7 +7,10 @@ struct OutfitPickerErrorTests {
     @Test
     func errorDescriptions() {
         testErrorDescriptions([
-            (OutfitPickerError.configurationNotFound, "Configuration not found"),
+            (
+                OutfitPickerError.configurationNotFound,
+                "Configuration not found"
+            ),
             (OutfitPickerError.categoryNotFound, "Category not found"),
             (OutfitPickerError.noOutfitsAvailable, "No outfits available"),
             (OutfitPickerError.fileSystemError, "File system error"),
@@ -21,12 +24,24 @@ struct OutfitPickerErrorTests {
     func equatableSemantics() {
         testEquatableSemantics(
             equal: [
-                (OutfitPickerError.categoryNotFound, OutfitPickerError.categoryNotFound),
-                (OutfitPickerError.invalidInput("A"), OutfitPickerError.invalidInput("A")),
+                (
+                    OutfitPickerError.categoryNotFound,
+                    OutfitPickerError.categoryNotFound
+                ),
+                (
+                    OutfitPickerError.invalidInput("A"),
+                    OutfitPickerError.invalidInput("A")
+                ),
             ],
             notEqual: [
-                (OutfitPickerError.cacheError, OutfitPickerError.fileSystemError),
-                (OutfitPickerError.invalidInput("A"), OutfitPickerError.invalidInput("B")),
+                (
+                    OutfitPickerError.cacheError,
+                    OutfitPickerError.fileSystemError
+                ),
+                (
+                    OutfitPickerError.invalidInput("A"),
+                    OutfitPickerError.invalidInput("B")
+                ),
             ]
         )
     }
@@ -40,10 +55,17 @@ struct OutfitPickerErrorTests {
     @Test
     func from_mappings() {
         #expect(
-            OutfitPickerError.from(ConfigError.pathTraversalNotAllowed) == .invalidConfiguration)
-        #expect(OutfitPickerError.from(CacheError.encodingFailed) == .cacheError)
+            OutfitPickerError.from(ConfigError.pathTraversalNotAllowed)
+                == .invalidConfiguration
+        )
+        #expect(
+            OutfitPickerError.from(CacheError.encodingFailed) == .cacheError
+        )
         #expect(OutfitPickerError.from(StorageError.diskFull) == .cacheError)
-        #expect(OutfitPickerError.from(FileSystemError.permissionDenied) == .fileSystemError)
+        #expect(
+            OutfitPickerError.from(FileSystemError.permissionDenied)
+                == .fileSystemError
+        )
 
         struct Unknown: Error {}
         #expect(OutfitPickerError.from(Unknown()) == .fileSystemError)

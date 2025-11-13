@@ -77,43 +77,65 @@ struct WearOutfitTests {
     // MARK: - Error mapping
 
     @Test func wear_failure_configLoad_mapsToInvalidConfiguration() {
-        let sut = makeOutfitPickerSUTWithConfigError(ConfigError.pathTraversalNotAllowed)
-        let ref = makeOutfitReference(root: root, category: "Any", fileName: "file.avatar")
+        let sut = makeOutfitPickerSUTWithConfigError(
+            ConfigError.pathTraversalNotAllowed
+        )
+        let ref = makeOutfitReference(
+            root: root,
+            category: "Any",
+            fileName: "file.avatar"
+        )
 
         let result = sut.wearOutfit(ref)
         switch result {
         case .failure(let e):
             #expect(e == .invalidConfiguration)
         case .success:
-            Issue.record("Expected invalidConfiguration from wearOutfit when config load fails.")
+            Issue.record(
+                "Expected invalidConfiguration from wearOutfit when config load fails."
+            )
         }
     }
 
     @Test func wear_failure_avatarListing_mapsToFileSystemError() throws {
-        let sut = try makeOutfitPickerSUTWithFileSystemError(FileSystemError.operationFailed)
-        let ref = makeOutfitReference(root: root, category: "Chic", fileName: "x.avatar")
+        let sut = try makeOutfitPickerSUTWithFileSystemError(
+            FileSystemError.operationFailed
+        )
+        let ref = makeOutfitReference(
+            root: root,
+            category: "Chic",
+            fileName: "x.avatar"
+        )
 
         let result = sut.wearOutfit(ref)
         switch result {
         case .failure(let e):
             #expect(e == .fileSystemError)
         case .success:
-            Issue.record("Expected fileSystemError from wearOutfit when FileManager throws.")
+            Issue.record(
+                "Expected fileSystemError from wearOutfit when FileManager throws."
+            )
         }
     }
 
     @Test func wear_failure_cacheLoad_mapsToCacheError() throws {
-        let sut = try makeOutfitPickerSUTWithCacheError(CacheError.decodingFailed)
-        let ref = makeOutfitReference(root: root, category: "Latex", fileName: "only.avatar")
+        let sut = try makeOutfitPickerSUTWithCacheError(
+            CacheError.decodingFailed
+        )
+        let ref = makeOutfitReference(
+            root: root,
+            category: "Latex",
+            fileName: "only.avatar"
+        )
 
         let result = sut.wearOutfit(ref)
         switch result {
         case .failure(let e):
             #expect(e == .cacheError)
         case .success:
-            Issue.record("Expected cacheError from wearOutfit when cache load fails.")
+            Issue.record(
+                "Expected cacheError from wearOutfit when cache load fails."
+            )
         }
     }
 }
-
-

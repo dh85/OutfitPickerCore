@@ -96,12 +96,20 @@ struct CategoryCacheTests {
         #expect(
             abs(
                 decoded.lastUpdated.timeIntervalSince1970
-                    - original.lastUpdated.timeIntervalSince1970) < 1.0)
+                    - original.lastUpdated.timeIntervalSince1970
+            ) < 1.0
+        )
     }
 
-    private func makeCache(worn: Int, total: Int, date: Date = Date()) -> CategoryCache {
+    private func makeCache(worn: Int, total: Int, date: Date = Date())
+        -> CategoryCache
+    {
         let outfits = Set((0..<worn).map { "outfit\($0).avatar" })
-        return CategoryCache(wornOutfits: outfits, totalOutfits: total, lastUpdated: date)
+        return CategoryCache(
+            wornOutfits: outfits,
+            totalOutfits: total,
+            lastUpdated: date
+        )
     }
 
     private func roundTrip<T: Codable>(_ value: T) throws -> T {

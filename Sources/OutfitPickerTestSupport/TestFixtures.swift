@@ -2,7 +2,7 @@ import Foundation
 import OutfitPickerCore
 
 /// Test fixtures and SUT containers for OutfitPicker testing.
-/// 
+///
 /// This module provides pre-configured System Under Test (SUT) containers
 /// that simplify test setup for common testing scenarios.
 
@@ -116,7 +116,10 @@ public func makeAcrossCategoriesSUT(
     let configSvc = FakeConfigService(.ok(config))
 
     let fs = makeFS(root: root, categories: categories)
-    let fm = FakeFileManager(.ok(fs.contents), directories: Array(fs.directories))
+    let fm = FakeFileManager(
+        .ok(fs.contents),
+        directories: Array(fs.directories)
+    )
     let cacheSvc = FakeCacheService(.ok(cache))
 
     let sut = OutfitPicker(

@@ -117,7 +117,9 @@ public final class ConfigBuilder: @unchecked Sendable {
     /// Excludes multiple categories using variadic parameters
     @discardableResult
     public func exclude(_ categories: String...) -> Self {
-        let cleaned = categories.map { $0.trimmingCharacters(in: .whitespacesAndNewlines) }
+        let cleaned = categories.map {
+            $0.trimmingCharacters(in: .whitespacesAndNewlines)
+        }
         self.excludedCategories.formUnion(cleaned.filter { !$0.isEmpty })
         return self
     }

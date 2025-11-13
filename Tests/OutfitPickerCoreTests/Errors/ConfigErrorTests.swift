@@ -24,11 +24,17 @@ struct ConfigErrorTests {
         testEquatableSemantics(
             equal: [
                 (ConfigError.emptyRoot, ConfigError.emptyRoot),
-                (ConfigError.unsupportedLanguage("en"), ConfigError.unsupportedLanguage("en")),
+                (
+                    ConfigError.unsupportedLanguage("en"),
+                    ConfigError.unsupportedLanguage("en")
+                ),
             ],
             notEqual: [
                 (ConfigError.emptyRoot, ConfigError.missingRoot),
-                (ConfigError.unsupportedLanguage("en"), ConfigError.unsupportedLanguage("de")),
+                (
+                    ConfigError.unsupportedLanguage("en"),
+                    ConfigError.unsupportedLanguage("de")
+                ),
             ]
         )
     }

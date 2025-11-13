@@ -92,7 +92,9 @@ struct CacheServiceTests {
 
     private func makeTestSetup() -> (CacheService, URL) {
         let base = uniqueTempDir()
-        let sut = CacheService(directoryProvider: FixedDirectoryProvider(url: base))
+        let sut = CacheService(
+            directoryProvider: FixedDirectoryProvider(url: base)
+        )
         return (sut, base)
     }
 

@@ -12,11 +12,14 @@ struct CategoriesTests {
 
     @Test
     func returnsCategoryReferences_sorted_andMatchingPaths() throws {
-        let fs = makeFS(root: root, categories: [
-            "B": ["b.avatar"],  // deliberately unordered
-            "A": ["a.avatar"]
-        ])
-        
+        let fs = makeFS(
+            root: root,
+            categories: [
+                "B": ["b.avatar"],  // deliberately unordered
+                "A": ["a.avatar"],
+            ]
+        )
+
         let env = try makeOutfitPickerSUT(
             root: root,
             fileSystem: fs.contents,
@@ -40,12 +43,19 @@ struct CategoriesTests {
 
     @Test
     func excludesUserExcludedCategories() throws {
-        let fs = makeFS(root: root, categories: [
-            "Excluded": [],
-            "Good": ["g.avatar"]
-        ])
-        
-        let config = try Config(root: root, language: "en", excludedCategories: ["Excluded"])
+        let fs = makeFS(
+            root: root,
+            categories: [
+                "Excluded": [],
+                "Good": ["g.avatar"],
+            ]
+        )
+
+        let config = try Config(
+            root: root,
+            language: "en",
+            excludedCategories: ["Excluded"]
+        )
         let env = try makeOutfitPickerSUT(
             root: root,
             config: config,
@@ -62,7 +72,9 @@ struct CategoriesTests {
 
     @Test
     func mapsConfigLoadFailure_toInvalidConfiguration() {
-        let sut = makeOutfitPickerSUTWithConfigError(ConfigError.pathTraversalNotAllowed)
+        let sut = makeOutfitPickerSUTWithConfigError(
+            ConfigError.pathTraversalNotAllowed
+        )
         let result = sut.getCategories()
 
         switch result {
@@ -75,7 +87,9 @@ struct CategoriesTests {
 
     @Test
     func mapsFileManagerFailureInsideCategoryInfo_toFileSystemError() throws {
-        let sut = try makeOutfitPickerSUTWithFileSystemError(FileSystemError.operationFailed)
+        let sut = try makeOutfitPickerSUTWithFileSystemError(
+            FileSystemError.operationFailed
+        )
         let result = sut.getCategories()
 
         switch result {

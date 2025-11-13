@@ -1,7 +1,7 @@
 import Foundation
 
 /// Test helper utilities for OutfitPicker testing.
-/// 
+///
 /// This module provides utility functions that simplify common testing operations
 /// such as temporary directory management and file existence checking.
 /// These helpers are designed to make tests more readable and maintainable.
@@ -9,25 +9,25 @@ import Foundation
 // MARK: - Temporary Directory Helpers
 
 /// Creates a unique temporary directory URL for isolated test runs.
-/// 
+///
 /// This function generates a unique URL within the system's temporary directory
 /// using a UUID to ensure test isolation. The directory itself is not created
 /// automatically - tests must create it if needed.
-/// 
+///
 /// - Returns: A unique URL for a temporary directory
-/// 
+///
 /// ## Usage Example
 /// ```swift
 /// let tempDir = uniqueTempDir()
 /// try FileManager.default.createDirectory(at: tempDir, withIntermediateDirectories: true)
-/// 
+///
 /// // Use tempDir for test files
 /// let configURL = tempDir.appending(path: "config.json")
-/// 
+///
 /// // Cleanup after test
 /// try? FileManager.default.removeItem(at: tempDir)
 /// ```
-/// 
+///
 /// ## Thread Safety
 /// This function is thread-safe as it uses UUID generation which is thread-safe.
 /// Each call returns a unique directory path, preventing conflicts between
@@ -43,17 +43,17 @@ public func uniqueTempDir() -> URL {
 // MARK: - File System Helpers
 
 /// Checks if a file or directory exists at the specified URL.
-/// 
+///
 /// This is a convenience wrapper around FileManager.fileExists(atPath:)
 /// that works directly with URL objects and handles path encoding automatically.
-/// 
+///
 /// - Parameter url: The URL to check for existence
 /// - Returns: `true` if a file or directory exists at the URL, `false` otherwise
-/// 
+///
 /// ## Usage Example
 /// ```swift
 /// let configURL = tempDir.appending(path: "config.json")
-/// 
+///
 /// if fileExists(configURL) {
 ///     // File exists, can read it
 ///     let data = try Data(contentsOf: configURL)
@@ -62,7 +62,7 @@ public func uniqueTempDir() -> URL {
 ///     try defaultConfig.write(to: configURL)
 /// }
 /// ```
-/// 
+///
 /// ## Notes
 /// - The `@discardableResult` attribute allows the return value to be ignored
 ///   when used for side effects or assertions

@@ -40,7 +40,10 @@ struct ConfigTests {
 
     @Test("Path too long throws (>4096 chars)")
     func pathTooLongThrows() {
-        expectConfigError(.pathTooLong, for: String(repeating: "a", count: 4097))
+        expectConfigError(
+            .pathTooLong,
+            for: String(repeating: "a", count: 4097)
+        )
     }
 
     @Test("Max path length allowed (4096 chars)")
@@ -195,11 +198,15 @@ struct ConfigTests {
         #expect(config.excludedCategories == ["downloads"])
         #expect(config.knownCategories == ["casual", "formal"])
         #expect(config.knownCategoryFiles.count == 2)
-        #expect(config.knownCategoryFiles["casual"] == ["a.avatar", "b.avatar"])
+        #expect(
+            config.knownCategoryFiles["casual"] == ["a.avatar", "b.avatar"]
+        )
         #expect(config.knownCategoryFiles["formal"] == ["dress1.avatar"])
     }
 
-    @Test("JSON decoding without language leaves it nil (Codable bypasses init)")
+    @Test(
+        "JSON decoding without language leaves it nil (Codable bypasses init)"
+    )
     func jsonDecodingWithoutLanguage() throws {
         let json = """
             {
@@ -281,7 +288,9 @@ struct ConfigTests {
 
     // MARK: - Helpers
 
-    private func makeSUT(root: String = "/valid/path", language: String? = nil) throws -> Config {
+    private func makeSUT(root: String = "/valid/path", language: String? = nil)
+        throws -> Config
+    {
         try Config(root: root, language: language)
     }
 

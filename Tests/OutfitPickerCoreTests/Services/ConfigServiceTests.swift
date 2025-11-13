@@ -101,7 +101,9 @@ struct ConfigServiceTests {
 
     private func makeTestSetup() -> (ConfigService, URL) {
         let base = uniqueTempDir()
-        let sut = ConfigService(directoryProvider: FixedDirectoryProvider(url: base))
+        let sut = ConfigService(
+            directoryProvider: FixedDirectoryProvider(url: base)
+        )
         return (sut, base)
     }
 
