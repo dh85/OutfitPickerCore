@@ -35,16 +35,12 @@ struct ConfigTests {
 
     @Test("Empty root throws", arguments: ["", "   ", "\t", "\n", " \t \n "])
     func emptyRootThrows(root: String) {
-        #expect(throws: ConfigError.emptyRoot) {
-            _ = try makeSUT(root: root)
-        }
+        expectConfigError(.emptyRoot, for: root)
     }
 
     @Test("Path too long throws (>4096 chars)")
     func pathTooLongThrows() {
-        #expect(throws: ConfigError.pathTooLong) {
-            _ = try makeSUT(root: String(repeating: "a", count: 4097))
-        }
+        expectConfigError(.pathTooLong, for: String(repeating: "a", count: 4097))
     }
 
     @Test("Max path length allowed (4096 chars)")
@@ -67,9 +63,7 @@ struct ConfigTests {
         ]
     )
     func pathTraversalThrows(root: String) {
-        #expect(throws: ConfigError.pathTraversalNotAllowed) {
-            _ = try makeSUT(root: root)
-        }
+        expectConfigError(.pathTraversalNotAllowed, for: root)
     }
 
     @Test(
@@ -86,9 +80,7 @@ struct ConfigTests {
         ]
     )
     func restrictedPathsThrow(root: String) {
-        #expect(throws: ConfigError.restrictedPath) {
-            _ = try makeSUT(root: root)
-        }
+        expectConfigError(.restrictedPath, for: root)
     }
 
     @Test(
@@ -101,9 +93,7 @@ struct ConfigTests {
         ]
     )
     func invalidCharactersThrow(root: String) {
-        #expect(throws: ConfigError.invalidCharacters) {
-            _ = try makeSUT(root: root)
-        }
+        expectConfigError(.invalidCharacters, for: root)
     }
 
     @Test(
@@ -144,9 +134,7 @@ struct ConfigTests {
             ]
         )
         func windowsRestrictedPathsThrow(root: String) {
-            #expect(throws: ConfigError.restrictedPath) {
-                _ = try makeSUT(root: root)
-            }
+            expectConfigError(.restrictedPath, for: root)
         }
     #endif
 
@@ -178,13 +166,10 @@ struct ConfigTests {
     @Test("JSON encodes expected keys")
     func jsonEncoding() throws {
         let sut = try makeSUT(root: "/test/path", language: "en")
-        let data = try JSONEncoder().encode(sut)
-        let json =
-            try JSONSerialization.jsonObject(with: data) as! [String: Any]
+        let json = try encodeToJSON(sut)
 
         #expect(json["root"] as? String == "/test/path")
         #expect(json["language"] as? String == "en")
-        // sets present (possibly empty)
         #expect(json.keys.contains("excludedCategories"))
         #expect(json.keys.contains("knownCategories"))
     }
@@ -203,23 +188,18 @@ struct ConfigTests {
                 }
             }
             """
-        let data = json.data(using: .utf8)!
-        let config = try JSONDecoder().decode(Config.self, from: data)
+        let config = try decodeConfig(from: json)
 
         #expect(config.root == "/test/path")
         #expect(config.language == "es")
         #expect(config.excludedCategories == ["downloads"])
         #expect(config.knownCategories == ["casual", "formal"])
         #expect(config.knownCategoryFiles.count == 2)
-        #expect(
-            config.knownCategoryFiles["casual"] == ["a.avatar", "b.avatar"]
-        )
+        #expect(config.knownCategoryFiles["casual"] == ["a.avatar", "b.avatar"])
         #expect(config.knownCategoryFiles["formal"] == ["dress1.avatar"])
     }
 
-    @Test(
-        "JSON decoding without language leaves it nil (Codable bypasses init)"
-    )
+    @Test("JSON decoding without language leaves it nil (Codable bypasses init)")
     func jsonDecodingWithoutLanguage() throws {
         let json = """
             {
@@ -229,11 +209,10 @@ struct ConfigTests {
                 "knownCategoryFiles": {}
             }
             """
-        let data = json.data(using: .utf8)!
-        let decoded = try JSONDecoder().decode(Config.self, from: data)
+        let decoded = try decodeConfig(from: json)
 
         #expect(decoded.root == "/test/path")
-        #expect(decoded.language == nil)  // synthesized Decodable bypasses init(root:language:...)
+        #expect(decoded.language == nil)
     }
 
     @Test("Equatable roundtrip")
@@ -255,25 +234,15 @@ struct ConfigTests {
 
     @Test("Non-ASCII characters in path throw invalidCharacters")
     func nonAsciiCharactersThrow() {
-        let badPaths = [
-            "/path/withéaccent",
-            "/path/with😀emoji",
-        ]
-
+        let badPaths = ["/path/withéaccent", "/path/with😀emoji"]
         for path in badPaths {
-            #expect(throws: ConfigError.invalidCharacters) {
-                _ = try makeSUT(root: path)
-            }
+            expectConfigError(.invalidCharacters, for: path)
         }
     }
 
     @Test("Over-normalised path without '..' throws pathTraversalNotAllowed")
     func overNormalisedPathThrowsTraversal() {
-        let path = "/a/././././b"
-
-        #expect(throws: ConfigError.pathTraversalNotAllowed) {
-            _ = try makeSUT(root: path)
-        }
+        expectConfigError(.pathTraversalNotAllowed, for: "/a/././././b")
     }
 
     #if os(macOS)
@@ -306,17 +275,29 @@ struct ConfigTests {
 
             let symlinkPath = link.path
 
-            #expect(throws: ConfigError.symlinkNotAllowed) {
-                _ = try makeSUT(root: symlinkPath)
-            }
+            expectConfigError(.symlinkNotAllowed, for: symlinkPath)
         }
     #endif
 
     // MARK: - Helpers
 
-    private func makeSUT(root: String = "/valid/path", language: String? = nil)
-        throws -> Config
-    {
+    private func makeSUT(root: String = "/valid/path", language: String? = nil) throws -> Config {
         try Config(root: root, language: language)
+    }
+
+    private func expectConfigError(_ error: ConfigError, for root: String) {
+        #expect(throws: error) {
+            _ = try makeSUT(root: root)
+        }
+    }
+
+    private func encodeToJSON(_ config: Config) throws -> [String: Any] {
+        let data = try JSONEncoder().encode(config)
+        return try JSONSerialization.jsonObject(with: data) as! [String: Any]
+    }
+
+    private func decodeConfig(from json: String) throws -> Config {
+        let data = json.data(using: .utf8)!
+        return try JSONDecoder().decode(Config.self, from: data)
     }
 }

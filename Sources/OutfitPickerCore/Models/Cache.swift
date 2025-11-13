@@ -19,7 +19,7 @@ public struct CategoryCache: Codable, Equatable, Sendable {
         self.lastUpdated = lastUpdated
     }
 
-    /// Whether all the files in the category have worn by the user
+    /// Whether all outfits in the category have been worn by the user
     public var isRotationComplete: Bool {
         wornOutfits.count >= totalOutfits
     }
@@ -35,7 +35,7 @@ public struct CategoryCache: Codable, Equatable, Sendable {
         max(0, totalOutfits - wornOutfits.count)
     }
 
-    /// creates a new cache with an additional worn outfit
+    /// Creates a new cache with an additional worn outfit
     public func adding(_ fileName: String) -> CategoryCache {
         CategoryCache(
             wornOutfits: wornOutfits.union([fileName]),
@@ -70,9 +70,7 @@ public struct OutfitCache: Codable, Equatable {
     }
 
     /// Updates cache with a new category state
-    public func updating(category path: String, with cache: CategoryCache)
-        -> OutfitCache
-    {
+    public func updating(category path: String, with cache: CategoryCache) -> OutfitCache {
         var updatedCategories = categories
         updatedCategories[path] = cache
         return OutfitCache(
@@ -92,6 +90,7 @@ public struct OutfitCache: Codable, Equatable {
         )
     }
 
+    /// Removes a category from the cache
     public func removing(category path: String) -> OutfitCache {
         var updatedCategories = categories
         updatedCategories.removeValue(forKey: path)
@@ -102,6 +101,7 @@ public struct OutfitCache: Codable, Equatable {
         )
     }
 
+    /// Resets a specific category's rotation state
     public func resetting(category path: String) -> OutfitCache? {
         guard let categoryCache = categories[path] else { return nil }
         return updating(category: path, with: categoryCache.reset())

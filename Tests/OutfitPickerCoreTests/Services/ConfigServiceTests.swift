@@ -9,14 +9,12 @@ struct ConfigServiceTests {
 
     @Test
     func saveThenLoadRoundTrip() throws {
-        let base = uniqueTempDir()
-        let sut = makeSUT(base: base)
+        let (sut, _) = makeTestSetup()
+        let original = try sampleConfig()
 
-        let original = try Config(root: "/some/path", language: "en")
         try sut.save(original)
-
         let loaded = try sut.load()
-        // Prefer Equatable if Config conforms; otherwise assert fields individually.
+
         #expect(loaded == original)
     }
 
@@ -24,11 +22,7 @@ struct ConfigServiceTests {
 
     @Test
     func deleteRemovesFile() throws {
-        let base = uniqueTempDir()
-        let sut = makeSUT(base: base)
-
-        try sut.save(try Config(root: "/x", language: "en"))
-        let path = try sut.configPath()
+        let (sut, path) = try makeTestSetupWithSavedConfig()
         #expect(fileExists(path))
 
         try sut.delete()
@@ -39,10 +33,9 @@ struct ConfigServiceTests {
 
     @Test
     func configUsesCorrectFileNameAndAppFolder() throws {
-        let base = uniqueTempDir()
-        let sut = makeSUT(base: base)
-
+        let (sut, _) = makeTestSetup()
         let path = try sut.configPath()
+
         #expect(path.lastPathComponent == "config.json")
         #expect(path.path(percentEncoded: false).contains("outfitpicker"))
     }
@@ -51,8 +44,7 @@ struct ConfigServiceTests {
 
     @Test
     func loadThrowsWhenConfigFileIsMissing() {
-        let base = uniqueTempDir()
-        let sut = makeSUT(base: base)
+        let (sut, _) = makeTestSetup()
 
         #expect(throws: OutfitPickerError.configurationNotFound) {
             _ = try sut.load()
@@ -63,15 +55,8 @@ struct ConfigServiceTests {
 
     @Test
     func loadThrowsOnCorruptJSON() throws {
-        let base = uniqueTempDir()
-        let sut = makeSUT(base: base)
-
-        let badPath = try sut.configPath()
-        try FileManager.default.createDirectory(
-            at: badPath.deletingLastPathComponent(),
-            withIntermediateDirectories: true
-        )
-        try Data("not json".utf8).write(to: badPath)
+        let (sut, _) = makeTestSetup()
+        try writeCorruptData(to: sut)
 
         #expect(throws: DecodingError.self) {
             _ = try sut.load()
@@ -82,11 +67,9 @@ struct ConfigServiceTests {
 
     @Test
     func saveCreatesMissingDirectories() throws {
-        let base = uniqueTempDir()
-        let sut = makeSUT(base: base)
+        let (sut, _) = makeTestSetup()
 
-        try sut.save(try Config(root: "/x", language: "en"))
-
+        try sut.save(try sampleConfig())
         let path = try sut.configPath()
         #expect(fileExists(path))
     }
@@ -95,13 +78,12 @@ struct ConfigServiceTests {
 
     @Test
     func writeFailureSurfaces() {
-        let base = uniqueTempDir()
         let sut = ConfigService(
             dataManager: ThrowingDataManager(),
-            directoryProvider: FixedDirectoryProvider(url: base)
+            directoryProvider: FixedDirectoryProvider(url: uniqueTempDir())
         )
         #expect(throws: Error.self) {
-            try sut.save(try Config(root: "/x", language: "en"))
+            try sut.save(try sampleConfig())
         }
     }
 
@@ -117,7 +99,29 @@ struct ConfigServiceTests {
 
     // MARK: - Helpers
 
-    private func makeSUT(base: URL) -> ConfigService {
-        ConfigService(directoryProvider: FixedDirectoryProvider(url: base))
+    private func makeTestSetup() -> (ConfigService, URL) {
+        let base = uniqueTempDir()
+        let sut = ConfigService(directoryProvider: FixedDirectoryProvider(url: base))
+        return (sut, base)
+    }
+
+    private func makeTestSetupWithSavedConfig() throws -> (ConfigService, URL) {
+        let (sut, _) = makeTestSetup()
+        try sut.save(try sampleConfig())
+        let path = try sut.configPath()
+        return (sut, path)
+    }
+
+    private func sampleConfig() throws -> Config {
+        try Config(root: "/x", language: "en")
+    }
+
+    private func writeCorruptData(to sut: ConfigService) throws {
+        let path = try sut.configPath()
+        try FileManager.default.createDirectory(
+            at: path.deletingLastPathComponent(),
+            withIntermediateDirectories: true
+        )
+        try Data("not json".utf8).write(to: path)
     }
 }

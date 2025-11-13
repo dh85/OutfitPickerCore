@@ -9,12 +9,8 @@ struct CacheServiceTests {
 
     @Test
     func saveThenLoadRoundTrip() throws {
-        let base = uniqueTempDir()
-        let sut = makeSUT(base: base)
-
-        let original = OutfitCache(categories: [
-            "/cat": .init(wornOutfits: ["a"], totalOutfits: 3)
-        ])
+        let (sut, _) = makeTestSetup()
+        let original = sampleCache()
 
         try sut.save(original)
         let loaded = try sut.load()
@@ -26,11 +22,7 @@ struct CacheServiceTests {
 
     @Test
     func deleteRemovesFile() throws {
-        let base = uniqueTempDir()
-        let sut = makeSUT(base: base)
-
-        try sut.save(OutfitCache())
-        let path = try sut.cachePath()
+        let (sut, path) = try makeTestSetupWithSavedCache()
         #expect(fileExists(path))
 
         try sut.delete()
@@ -41,16 +33,8 @@ struct CacheServiceTests {
 
     @Test
     func loadThrowsOnCorruptJSON() throws {
-        let base = uniqueTempDir()
-        let sut = makeSUT(base: base)
-
-        // Write bad bytes at the expected path
-        let badPath = try sut.cachePath()
-        try FileManager.default.createDirectory(
-            at: badPath.deletingLastPathComponent(),
-            withIntermediateDirectories: true
-        )
-        try Data("not json".utf8).write(to: badPath)
+        let (sut, _) = makeTestSetup()
+        try writeCorruptData(to: sut)
 
         #expect(throws: DecodingError.self) {
             _ = try sut.load()
@@ -61,11 +45,9 @@ struct CacheServiceTests {
 
     @Test
     func saveCreatesMissingDirectories() throws {
-        let base = uniqueTempDir()
-        let sut = makeSUT(base: base)
+        let (sut, _) = makeTestSetup()
 
         try sut.save(OutfitCache())
-
         let path = try sut.cachePath()
         #expect(fileExists(path))
     }
@@ -74,10 +56,9 @@ struct CacheServiceTests {
 
     @Test
     func writeFailureSurfaces() {
-        let base = uniqueTempDir()
         let sut = CacheService(
             dataManager: ThrowingDataManager(),
-            directoryProvider: FixedDirectoryProvider(url: base)
+            directoryProvider: FixedDirectoryProvider(url: uniqueTempDir())
         )
         #expect(throws: Error.self) {
             try sut.save(OutfitCache())
@@ -89,32 +70,51 @@ struct CacheServiceTests {
     @Test
     func directoryResolutionErrorMapsToCacheError() {
         let sut = CacheService(directoryProvider: ThrowingDirectoryProvider())
-        #expect(throws: CacheError.pathNotFound) {
+        #expect(throws: FileSystemError.directoryNotFound) {
             _ = try sut.cachePath()
         }
     }
 
-    // MARK: - Default on missing file (exercises `?? OutfitCache()`)
+    // MARK: - Default on missing file
 
     @Test
     func loadReturnsDefaultWhenCacheFileIsMissing() throws {
-        let base = uniqueTempDir()  // ensure clean, unique location
-        let sut = makeSUT(base: base)
-
+        let (sut, _) = makeTestSetup()
         let cache = try sut.load()
 
         #expect(cache.categories.isEmpty)
         #expect(cache.version == 1)
         #expect(cache.createdAt <= Date())
-
-        // No file should have been created as a side-effect of load
-        let path = try sut.cachePath()
-        #expect(!fileExists(path))
+        #expect(!fileExists(try sut.cachePath()))
     }
 
     // MARK: - Helpers
 
-    private func makeSUT(base: URL) -> CacheService {
-        CacheService(directoryProvider: FixedDirectoryProvider(url: base))
+    private func makeTestSetup() -> (CacheService, URL) {
+        let base = uniqueTempDir()
+        let sut = CacheService(directoryProvider: FixedDirectoryProvider(url: base))
+        return (sut, base)
+    }
+
+    private func makeTestSetupWithSavedCache() throws -> (CacheService, URL) {
+        let (sut, _) = makeTestSetup()
+        try sut.save(OutfitCache())
+        let path = try sut.cachePath()
+        return (sut, path)
+    }
+
+    private func sampleCache() -> OutfitCache {
+        OutfitCache(categories: [
+            "/cat": .init(wornOutfits: ["a"], totalOutfits: 3)
+        ])
+    }
+
+    private func writeCorruptData(to sut: CacheService) throws {
+        let path = try sut.cachePath()
+        try FileManager.default.createDirectory(
+            at: path.deletingLastPathComponent(),
+            withIntermediateDirectories: true
+        )
+        try Data("not json".utf8).write(to: path)
     }
 }

@@ -18,30 +18,14 @@ private enum DummyError: Error { case mapped }
 struct FileServiceTests {
 
     @Test func loadReturnsNilWhenMissing() throws {
-        let base = uniqueTempDir()
-        let sut = makeSUT(fileName: "missing.json", base: base)
+        let sut = makeTestSUT(fileName: "missing.json")
         let m: TestModel? = try sut.load()
         #expect(m == nil)
     }
 
     @Test func loadThrowsWhenReadFailsBeforeDecode() throws {
-        let base = uniqueTempDir()
-        let path =
-            base
-            .appending(path: "outfitpicker", directoryHint: .isDirectory)
-            .appending(path: "readfail.json", directoryHint: .notDirectory)
-        try FileManager.default.createDirectory(
-            at: path.deletingLastPathComponent(),
-            withIntermediateDirectories: true
-        )
-        FileManager.default.createFile(
-            atPath: path.path(percentEncoded: false),
-            contents: Data()
-        )  // make fileExists true
-
-        let sut = makeSUT(
+        let (sut, _) = try makeTestSUTWithFile(
             fileName: "readfail.json",
-            base: base,
             dataManager: ThrowingReadDataManager()
         )
 
@@ -49,23 +33,8 @@ struct FileServiceTests {
     }
 
     @Test func loadThrowsOnCorruptJSON() throws {
-        let base = uniqueTempDir()
-        let path =
-            base
-            .appending(path: "outfitpicker", directoryHint: .isDirectory)
-            .appending(path: "bad.json", directoryHint: .notDirectory)
-        try FileManager.default.createDirectory(
-            at: path.deletingLastPathComponent(),
-            withIntermediateDirectories: true
-        )
-        FileManager.default.createFile(
-            atPath: path.path(percentEncoded: false),
-            contents: Data()
-        )
-
-        let sut = makeSUT(
+        let (sut, _) = try makeTestSUTWithFile(
             fileName: "bad.json",
-            base: base,
             dataManager: CorruptingDataManager()
         )
 
@@ -75,15 +44,10 @@ struct FileServiceTests {
     }
 
     @Test func saveCreatesDirAndWrites() throws {
-        let base = uniqueTempDir()
         let recorder = RecordingDataManager()
-        let sut = makeSUT(
-            fileName: "model.json",
-            base: base,
-            dataManager: recorder
-        )
+        let sut = makeTestSUT(fileName: "model.json", dataManager: recorder)
 
-        try sut.save(TestModel(id: 1, name: "a"))
+        try sut.save(sampleModel())
 
         let p = try sut.filePath()
         #expect(fileExists(p))
@@ -91,62 +55,40 @@ struct FileServiceTests {
     }
 
     @Test func savePropagatesCreateDirectoryFailure() {
-        let base = uniqueTempDir()
-        let fm = FileManagerThrowingCreateDir()
-        let sut = makeSUT(
+        let sut = makeTestSUT(
             fileName: "failmkdir.json",
-            base: base,
-            fileManager: fm
+            fileManager: FileManagerThrowingCreateDir()
         )
 
         #expect(throws: Error.self) {
-            try sut.save(TestModel(id: 2, name: "b"))
+            try sut.save(sampleModel())
         }
     }
 
     @Test func saveMapsErrorWhenDirectoryProviderFails() {
-        let base = uniqueTempDir()
-        let sut = makeSUT(
-            fileName: "x.json",
-            base: base,
-            directoryProvider: ThrowingDirectoryProvider(
-                NSError(domain: "dir", code: 9, userInfo: nil)
-            ),
-            errorMapper: { DummyError.mapped }
-        )
+        let sut = makeTestSUTWithThrowingProvider(errorMapper: { DummyError.mapped })
 
         #expect(throws: DummyError.mapped) {
-            try sut.save(TestModel(id: 3, name: "c"))
+            try sut.save(sampleModel())
         }
     }
 
     @Test func filePathMapsError() {
-        let base = uniqueTempDir()
-        let sut = makeSUT(
-            fileName: "x.json",
-            base: base,
-            directoryProvider: ThrowingDirectoryProvider(
-                NSError(domain: "dir", code: 9, userInfo: nil)
-            ),
-            errorMapper: { DummyError.mapped }
-        )
+        let sut = makeTestSUTWithThrowingProvider(errorMapper: { DummyError.mapped })
         #expect(throws: DummyError.mapped) { _ = try sut.filePath() }
     }
 
     @Test func deleteIsNoOpWhenMissing() throws {
-        let base = uniqueTempDir()
-        let sut = makeSUT(fileName: "gone.json", base: base)
+        let sut = makeTestSUT(fileName: "gone.json")
         try sut.delete()  // no throw
         let p = try sut.filePath()
         #expect(!fileExists(p))
     }
 
     @Test func deleteRemovesWhenPresent() throws {
-        let base = uniqueTempDir()
-        let sut = makeSUT(fileName: "del.json", base: base)
+        let sut = makeTestSUT(fileName: "del.json")
 
-        // write a file
-        try sut.save(TestModel(id: 4, name: "d"))
+        try sut.save(sampleModel())
         let p = try sut.filePath()
         #expect(fileExists(p))
 
@@ -155,15 +97,7 @@ struct FileServiceTests {
     }
 
     @Test func deleteMapsErrorWhenDirectoryProviderFails() {
-        let base = uniqueTempDir()
-        let sut = makeSUT(
-            fileName: "x.json",
-            base: base,
-            directoryProvider: ThrowingDirectoryProvider(
-                NSError(domain: "dir", code: 9, userInfo: nil)
-            ),
-            errorMapper: { DummyError.mapped }
-        )
+        let sut = makeTestSUTWithThrowingProvider(errorMapper: { DummyError.mapped })
         #expect(throws: DummyError.mapped) { try sut.delete() }
     }
 
@@ -232,7 +166,7 @@ struct FileServiceTests {
         let fm = FakeFileManagerNoAppSupport()
         let provider = DefaultDirectoryProvider(fileManager: fm)
 
-        #expect(throws: ConfigError.pathTraversalNotAllowed) {
+        #expect(throws: OutfitPickerError.invalidConfiguration) {
             _ = try provider.baseDirectory()
         }
     }
@@ -254,31 +188,73 @@ struct FileServiceTests {
             directoryProvider: failingProvider
         )
 
-        #expect(throws: ConfigError.pathTraversalNotAllowed) {
+        #expect(throws: OutfitPickerError.invalidConfiguration) {
             _ = try sut.filePath()
         }
     }
 
     // MARK: - Helpers
 
-    private func makeSUT(
-        fileName: String,
-        base: URL,
+    private func makeTestSUT(
+        fileName: String = "test.json",
         fileManager: FileManagerProtocol = FileManager.default,
-        dataManager: DataManagerProtocol = DefaultDataManager(),
-        directoryProvider: DirectoryProvider? = nil,
-        errorMapper: @escaping @Sendable () -> Error = {
-            ConfigError.pathTraversalNotAllowed
-        }
+        dataManager: DataManagerProtocol = DefaultDataManager()
     ) -> FileService<TestModel> {
         FileService<TestModel>(
             fileName: fileName,
             fileManager: fileManager,
             dataManager: dataManager,
-            directoryProvider: directoryProvider
-                ?? FixedDirectoryProvider(url: base),
+            directoryProvider: FixedDirectoryProvider(url: uniqueTempDir()),
+            errorMapper: { ConfigError.pathTraversalNotAllowed }
+        )
+    }
+
+    private func makeTestSUTWithFile(
+        fileName: String,
+        dataManager: DataManagerProtocol
+    ) throws -> (FileService<TestModel>, URL) {
+        let base = uniqueTempDir()
+        let path =
+            base
+            .appending(path: "outfitpicker", directoryHint: .isDirectory)
+            .appending(path: fileName, directoryHint: .notDirectory)
+
+        try FileManager.default.createDirectory(
+            at: path.deletingLastPathComponent(),
+            withIntermediateDirectories: true
+        )
+        _ = FileManager.default.createFile(
+            atPath: path.path(percentEncoded: false),
+            contents: Data()
+        )
+
+        let sut = FileService<TestModel>(
+            fileName: fileName,
+            fileManager: FileManager.default,
+            dataManager: dataManager,
+            directoryProvider: FixedDirectoryProvider(url: base),
+            errorMapper: { ConfigError.pathTraversalNotAllowed }
+        )
+
+        return (sut, path)
+    }
+
+    private func makeTestSUTWithThrowingProvider(
+        errorMapper: @escaping @Sendable () -> Error
+    ) -> FileService<TestModel> {
+        FileService<TestModel>(
+            fileName: "x.json",
+            fileManager: FileManager.default,
+            dataManager: DefaultDataManager(),
+            directoryProvider: ThrowingDirectoryProvider(
+                NSError(domain: "dir", code: 9, userInfo: nil)
+            ),
             errorMapper: errorMapper
         )
+    }
+
+    private func sampleModel() -> TestModel {
+        TestModel(id: 1, name: "test")
     }
 }
 

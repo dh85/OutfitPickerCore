@@ -4,9 +4,13 @@ import Foundation
 ///
 /// Provides methods for loading, saving, and managing outfit picker configuration files.
 public protocol ConfigServiceProtocol: Sendable {
+    /// Loads configuration from persistent storage
     func load() throws -> Config
+    /// Saves configuration to persistent storage
     func save(_ config: Config) throws
+    /// Deletes configuration from persistent storage
     func delete() throws
+    /// Returns the path to the configuration file
     func configPath() throws -> URL
 }
 
@@ -26,8 +30,11 @@ public protocol ConfigServiceProtocol: Sendable {
 public struct ConfigService: ConfigServiceProtocol, @unchecked Sendable {
     private let fileService: FileService<Config>
 
-    /// Creates a new configuration service.
-    /// - Parameter fileManager: File manager for filesystem operations. Defaults to `.default`
+    /// Creates a new configuration service with configurable dependencies.
+    /// - Parameters:
+    ///   - fileManager: File manager for filesystem operations
+    ///   - dataManager: Data manager for encoding/decoding operations
+    ///   - directoryProvider: Provider for application directories
     public init(
         fileManager: any FileManagerProtocol = FileManager.default,
         dataManager: DataManagerProtocol = DefaultDataManager(),
@@ -44,14 +51,14 @@ public struct ConfigService: ConfigServiceProtocol, @unchecked Sendable {
 
     /// Returns the full path to the configuration file.
     /// - Returns: URL pointing to the config.json file location
-    /// - Throws: `ConfigError.pathTraversalNotAllowed` if no valid config directory found
+    /// - Throws: `FileSystemError` if no valid config directory found
     public func configPath() throws -> URL {
         try fileService.filePath()
     }
 
     /// Loads configuration from the filesystem.
-    /// Returns: Decoded Config object
-    /// Throws: File system errors or JSON decoding errors
+    /// - Returns: Decoded Config object
+    /// - Throws: `OutfitPickerError.configurationNotFound` if file doesn't exist, or JSON decoding errors
     public func load() throws -> Config {
         guard let config = try fileService.load() else {
             throw OutfitPickerError.configurationNotFound
@@ -61,13 +68,13 @@ public struct ConfigService: ConfigServiceProtocol, @unchecked Sendable {
 
     /// Saves configuration to the filesystem.
     /// - Parameter config: Configuration object to persist
-    /// - Throws: File system errors or JSON encoding errors
+    /// - Throws: `FileSystemError` or JSON encoding errors
     public func save(_ config: Config) throws {
         try fileService.save(config)
     }
 
     /// Deletes the configuration file from the filesystem.
-    /// - Throws: File system errors if deletion fails
+    /// - Throws: `FileSystemError` if deletion fails
     public func delete() throws {
         try fileService.delete()
     }

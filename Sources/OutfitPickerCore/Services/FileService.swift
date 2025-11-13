@@ -1,10 +1,16 @@
 import Foundation
 
+/// Protocol for data I/O operations.
+///
+/// Abstracts file reading and writing operations for testability.
 public protocol DataManagerProtocol {
+    /// Reads data from a file URL
     func data(contentsOf url: URL) throws -> Data
+    /// Writes data to a file URL
     func write(_ data: Data, to url: URL) throws
 }
 
+/// Default implementation of DataManagerProtocol using Foundation APIs.
 public struct DefaultDataManager: DataManagerProtocol {
     public init() {}
 
@@ -17,12 +23,20 @@ public struct DefaultDataManager: DataManagerProtocol {
     }
 }
 
+/// Protocol for providing platform-specific directories.
+///
+/// Abstracts directory resolution for cross-platform compatibility.
 public protocol DirectoryProvider {
+    /// Returns the base directory for application data
     func baseDirectory() throws -> URL
 }
 
+/// Default implementation providing platform-appropriate directories.
+///
+/// Uses XDG_CONFIG_HOME on Linux, Application Support on macOS.
 public struct DefaultDirectoryProvider: DirectoryProvider {
     private let fileManager: any FileManagerProtocol
+
     public init(fileManager: any FileManagerProtocol = FileManager.default) {
         self.fileManager = fileManager
     }
@@ -36,12 +50,23 @@ public struct DefaultDirectoryProvider: DirectoryProvider {
                 for: .applicationSupportDirectory,
                 in: .userDomainMask
             ).first
-        else { throw ConfigError.pathTraversalNotAllowed }
+        else { throw OutfitPickerError.invalidConfiguration }
         return appSup
     }
 }
 
-public struct FileService<T: Codable> {
+/// Generic file service for JSON persistence operations.
+///
+/// Provides type-safe loading, saving, and deletion of Codable objects
+/// with configurable dependencies for testing and platform compatibility.
+///
+/// Example:
+/// ```swift
+/// let service = FileService<Config>(fileName: "config.json")
+/// try service.save(myConfig)
+/// let loaded = try service.load()
+/// ```
+public struct FileService<T: Codable>: @unchecked Sendable {
     private let fileManager: any FileManagerProtocol
     private let dataManager: DataManagerProtocol
     private let directoryProvider: DirectoryProvider
@@ -49,13 +74,20 @@ public struct FileService<T: Codable> {
     private let appName = "outfitpicker"
     private let errorMapper: @Sendable () -> Error
 
+    /// Creates a new file service with configurable dependencies.
+    /// - Parameters:
+    ///   - fileName: Name of the file to manage
+    ///   - fileManager: File manager for filesystem operations
+    ///   - dataManager: Data manager for I/O operations
+    ///   - directoryProvider: Provider for application directories
+    ///   - errorMapper: Function to map directory errors to appropriate types
     public init(
         fileName: String,
         fileManager: any FileManagerProtocol = FileManager.default,
         dataManager: DataManagerProtocol = DefaultDataManager(),
         directoryProvider: DirectoryProvider = DefaultDirectoryProvider(),
         errorMapper: @escaping @Sendable () -> Error = {
-            ConfigError.pathTraversalNotAllowed
+            OutfitPickerError.invalidConfiguration
         }
     ) {
         self.fileName = fileName
@@ -65,6 +97,9 @@ public struct FileService<T: Codable> {
         self.errorMapper = errorMapper
     }
 
+    /// Returns the full path to the managed file.
+    /// - Returns: URL pointing to the file location
+    /// - Throws: Mapped error if directory resolution fails
     public func filePath() throws -> URL {
         do {
             return try directoryProvider.baseDirectory()
@@ -75,6 +110,9 @@ public struct FileService<T: Codable> {
         }
     }
 
+    /// Loads and decodes an object from the file.
+    /// - Returns: Decoded object, or nil if file doesn't exist
+    /// - Throws: File system or JSON decoding errors
     public func load() throws -> T? {
         let url = try filePath()
         guard
@@ -89,6 +127,9 @@ public struct FileService<T: Codable> {
         return try JSONDecoder().decode(T.self, from: data)
     }
 
+    /// Encodes and saves an object to the file.
+    /// - Parameter object: Object to encode and save
+    /// - Throws: File system or JSON encoding errors
     public func save(_ object: T) throws {
         let url = try filePath()
         try ensureDirectoryExists(at: url.deletingLastPathComponent())
@@ -99,6 +140,8 @@ public struct FileService<T: Codable> {
         try dataManager.write(data, to: url)
     }
 
+    /// Deletes the file if it exists.
+    /// - Throws: File system errors if deletion fails
     public func delete() throws {
         let url = try filePath()
         if fileManager.fileExists(

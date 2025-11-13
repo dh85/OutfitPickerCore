@@ -8,21 +8,29 @@ import Foundation
 ///
 /// Example:
 /// ```swift
-/// let causal = Category(
+/// let casual = Category(
 ///     path: "/Users/john/outfits/casual",
-///     files: ["outfit1.avatar", "outfit2.avatar", "outfit3.avatar"]
+///     outfits: ["outfit1.avatar", "outfit2.avatar", "outfit3.avatar"]
 /// )
 /// print(casual.name) // "casual"
 /// ```
-public struct Category: Sendable {
+public struct Category: Sendable, Equatable {
     /// Full filesystem path to the category directory
     public let path: String
     /// Array of outfits within this category
     public let outfits: [String]
 
+    private let _url: URL
+
+    public init(path: String, outfits: [String]) {
+        self.path = path
+        self.outfits = outfits
+        self._url = URL(filePath: path, directoryHint: .isDirectory)
+    }
+
     /// The category name extracted from the directory path
     public var name: String {
-        URL(filePath: path, directoryHint: .isDirectory).lastPathComponent
+        _url.lastPathComponent
     }
 }
 
@@ -37,28 +45,29 @@ public struct Category: Sendable {
 /// print(outfit1.fileName) // "outfit1.avatar"
 /// print(outfit1.categoryPath) // "/Users/john/outfits/casual"
 /// ```
-public struct FileEntry {
+public struct FileEntry: Equatable, Sendable {
     /// Complete path to the specific outfit file
     public let filePath: String
     /// Filename without path information
     public let fileName: String
 
+    private let _url: URL
+    private let _categoryURL: URL
+
     public init(filePath: String) {
         self.filePath = filePath
-        self.fileName =
-            URL(filePath: filePath, directoryHint: .notDirectory)
-            .lastPathComponent
+        self._url = URL(filePath: filePath, directoryHint: .notDirectory)
+        self.fileName = _url.lastPathComponent
+        self._categoryURL = _url.deletingLastPathComponent()
     }
 
     /// Path to the parent category directory
     public var categoryPath: String {
-        URL(filePath: filePath, directoryHint: .notDirectory)
-            .deletingLastPathComponent().path(percentEncoded: false)
+        _categoryURL.path(percentEncoded: false)
     }
 
     /// Category name derived from the parent directory
     public var categoryName: String {
-        URL(filePath: categoryPath, directoryHint: .isDirectory)
-            .lastPathComponent
+        _categoryURL.lastPathComponent
     }
 }

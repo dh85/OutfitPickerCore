@@ -12,22 +12,28 @@ import Foundation
 public struct Config: Codable, Sendable, Equatable {
     /// Root directory path containing outfit files
     public let root: String
-    /// Optional language code (e.g., "en", "es", "fr")
+    /// Language code for localization (e.g., "en", "es", "fr")
     public let language: String?
+    /// Categories excluded from outfit selection
     public let excludedCategories: Set<String>
+    /// Categories discovered in the filesystem
     public let knownCategories: Set<String>
+    /// Files tracked per category for change detection
     public let knownCategoryFiles: [String: Set<String>]
 
     /// Creates and validates a new configuration.
     ///
     /// Performs comprehensive validation including:
-    /// - Path security checks (traversal, restricted directories, symlinks
+    /// - Path security checks (traversal, restricted directories, symlinks)
     /// - Language code validation
     /// - Input sanitization
     ///
     /// - Parameters:
-    ///     - root: Path to the root directory containing outfit files
-    ///     - language: Optional ISO 639-1 language code
+    ///   - root: Path to the root directory containing outfit files
+    ///   - language: Optional ISO 639-1 language code
+    ///   - excludedCategories: Categories to exclude from selection
+    ///   - knownCategories: Categories discovered in filesystem
+    ///   - knownCategoryFiles: Files tracked per category
     /// - Throws: `ConfigError` if validation fails
     public init(
         root: String,
