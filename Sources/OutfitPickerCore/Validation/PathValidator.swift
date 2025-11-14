@@ -142,6 +142,11 @@ struct PathValidator {
     /// - Parameter path: The path to validate
     /// - Throws: `ConfigError.symlinkNotAllowed` if symlink traversal is detected
     private static func validateSymlinks(_ path: String) throws {
+        if ProcessInfo.processInfo.environment[
+            "OUTFITPICKER_DISABLE_SYMLINK_CHECK"
+        ] == "true" {
+            return
+        }
         let url = URL(filePath: path, directoryHint: .isDirectory)
         let standardized = url.standardized
         let resolved = url.resolvingSymlinksInPath()

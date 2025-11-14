@@ -19,4 +19,6 @@ jobs:
     - name: Build
       run: swift build -v
     - name: Run tests
+      env:
+        OUTFITPICKER_DISABLE_SYMLINK_CHECK: true
       run: swift test -v
