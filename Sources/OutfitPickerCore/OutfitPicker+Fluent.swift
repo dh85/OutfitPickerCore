@@ -1,7 +1,7 @@
 import Foundation
 
 /// Fluent API for chaining outfit operations.
-public struct OutfitSelection {
+public struct OutfitSelection: Sendable {
     let outfit: OutfitReference
     let picker: OutfitPicker
     

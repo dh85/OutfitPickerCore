@@ -12,7 +12,7 @@ import Foundation
 ///     .reset("summer", "vacation")
 ///     .execute()
 /// ```
-public struct BatchOperationBuilder {
+public struct BatchOperationBuilder: Sendable {
     private let picker: OutfitPicker
     private var outfitsToWear: [OutfitReference] = []
     private var categoriesToReset: [String] = []
