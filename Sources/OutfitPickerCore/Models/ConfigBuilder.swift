@@ -63,7 +63,8 @@ public enum SupportedLanguage: String, CaseIterable, Sendable, Equatable {
 /// Builder for creating validated Config instances using a fluent API.
 ///
 /// ConfigBuilder provides a type-safe way to construct configurations with
-/// method chaining and automatic validation.
+/// method chaining and automatic validation. All errors are mapped to
+/// OutfitPickerError for consistent handling.
 ///
 /// Example:
 /// ```swift
@@ -165,11 +166,11 @@ public final class ConfigBuilder: @unchecked Sendable {
     // MARK: - Build Configuration
 
     /// Creates a validated Config instance from the current builder state
-    /// - Throws: `ConfigError.missingRoot` if no root directory was set
+    /// - Throws: `OutfitPickerError` if validation fails or no root directory was set
     /// - Returns: A validated Config instance
     public func build() throws -> Config {
         guard let rootPath else {
-            throw ConfigError.missingRoot
+            throw OutfitPickerError.invalidInput("Root directory must be set before building config")
         }
 
         return try Config(

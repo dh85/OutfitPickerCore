@@ -4,6 +4,7 @@ import Foundation
 ///
 /// Stores the root directory path for outfit files and optional language preference.
 /// Configurations are automatically validated during creation to ensure security.
+/// All validation errors are mapped to OutfitPickerError for consistent handling.
 ///
 /// Example:
 /// ```swift
@@ -34,7 +35,7 @@ public struct Config: Codable, Sendable, Equatable {
     ///   - excludedCategories: Categories to exclude from selection
     ///   - knownCategories: Categories discovered in filesystem
     ///   - knownCategoryFiles: Files tracked per category
-    /// - Throws: `ConfigError` if validation fails
+    /// - Throws: `OutfitPickerError` if validation fails
     public init(
         root: String,
         language: String? = nil,
@@ -42,18 +43,24 @@ public struct Config: Codable, Sendable, Equatable {
         knownCategories: Set<String> = [],
         knownCategoryFiles: [String: Set<String>] = [:]
     ) throws {
-        guard !root.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
-        else {
-            throw ConfigError.emptyRoot
+        do {
+            guard !root.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+            else {
+                throw OutfitPickerError.invalidInput("Root directory cannot be empty")
+            }
+
+            try PathValidator.validate(root)
+            try LanguageValidator.validate(language)
+
+            self.root = root
+            self.language = language ?? "en"
+            self.excludedCategories = excludedCategories
+            self.knownCategories = knownCategories
+            self.knownCategoryFiles = knownCategoryFiles
+        } catch let error as OutfitPickerError {
+            throw error
+        } catch {
+            throw OutfitPickerError.from(error)
         }
-
-        try PathValidator.validate(root)
-        try LanguageValidator.validate(language)
-
-        self.root = root
-        self.language = language ?? "en"
-        self.excludedCategories = excludedCategories
-        self.knownCategories = knownCategories
-        self.knownCategoryFiles = knownCategoryFiles
     }
 }

@@ -1,5 +1,5 @@
 import Foundation
-import OutfitPickerCore
+@testable import OutfitPickerCore
 import OutfitPickerTestSupport
 import Testing
 
@@ -58,7 +58,7 @@ struct ConfigServiceTests {
         let (sut, _) = makeTestSetup()
         try writeCorruptData(to: sut)
 
-        #expect(throws: DecodingError.self) {
+        #expect(throws: OutfitPickerError.fileSystemError) {
             _ = try sut.load()
         }
     }
@@ -92,7 +92,7 @@ struct ConfigServiceTests {
     @Test
     func directoryResolutionErrorMapsToConfigError() {
         let sut = ConfigService(directoryProvider: ThrowingDirectoryProvider())
-        #expect(throws: ConfigError.pathTraversalNotAllowed) {
+        #expect(throws: OutfitPickerError.invalidConfiguration) {
             _ = try sut.configPath()
         }
     }

@@ -3,6 +3,7 @@ import Foundation
 /// Protocol for cache persistence operations.
 ///
 /// Defines the interface for loading, saving, and managing outfit cache data.
+/// All methods throw OutfitPickerError for consistent error handling.
 public protocol CacheServiceProtocol: Sendable {
     /// Loads cache from persistent storage
     func load() throws -> OutfitCache
@@ -50,28 +51,44 @@ public struct CacheService: CacheServiceProtocol, @unchecked Sendable {
 
     /// Returns the full path to the cache file.
     /// - Returns: URL pointing to the cache.json file location
-    /// - Throws: `FileSystemError` if no valid cache directory found
+    /// - Throws: `OutfitPickerError` if no valid cache directory found
     public func cachePath() throws -> URL {
-        try fileService.filePath()
+        do {
+            return try fileService.filePath()
+        } catch {
+            throw OutfitPickerError.from(error)
+        }
     }
 
     /// Loads cache from the filesystem.
     /// - Returns: Decoded OutfitCache object, or empty cache if file doesn't exist
-    /// - Throws: `FileSystemError` or JSON decoding errors
+    /// - Throws: `OutfitPickerError` for any load failures
     public func load() throws -> OutfitCache {
-        try fileService.load() ?? OutfitCache()
+        do {
+            return try fileService.load() ?? OutfitCache()
+        } catch {
+            throw OutfitPickerError.from(error)
+        }
     }
 
     /// Saves cache to the filesystem.
     /// - Parameter cache: Cache object to persist
-    /// - Throws: `FileSystemError` or JSON encoding errors
+    /// - Throws: `OutfitPickerError` for any save failures
     public func save(_ cache: OutfitCache) throws {
-        try fileService.save(cache)
+        do {
+            try fileService.save(cache)
+        } catch {
+            throw OutfitPickerError.from(error)
+        }
     }
 
     /// Deletes the cache file from the filesystem.
-    /// - Throws: `FileSystemError` if deletion fails
+    /// - Throws: `OutfitPickerError` if deletion fails
     public func delete() throws {
-        try fileService.delete()
+        do {
+            try fileService.delete()
+        } catch {
+            throw OutfitPickerError.from(error)
+        }
     }
 }

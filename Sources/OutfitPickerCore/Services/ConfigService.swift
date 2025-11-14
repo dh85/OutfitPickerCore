@@ -3,6 +3,7 @@ import Foundation
 /// Protocol defining configuration persistence operations.
 ///
 /// Provides methods for loading, saving, and managing outfit picker configuration files.
+/// All methods throw OutfitPickerError for consistent error handling.
 public protocol ConfigServiceProtocol: Sendable {
     /// Loads configuration from persistent storage
     func load() throws -> Config
@@ -51,31 +52,49 @@ public struct ConfigService: ConfigServiceProtocol, @unchecked Sendable {
 
     /// Returns the full path to the configuration file.
     /// - Returns: URL pointing to the config.json file location
-    /// - Throws: `FileSystemError` if no valid config directory found
+    /// - Throws: `OutfitPickerError` if no valid config directory found
     public func configPath() throws -> URL {
-        try fileService.filePath()
+        do {
+            return try fileService.filePath()
+        } catch {
+            throw OutfitPickerError.from(error)
+        }
     }
 
     /// Loads configuration from the filesystem.
     /// - Returns: Decoded Config object
     /// - Throws: `OutfitPickerError.configurationNotFound` if file doesn't exist, or JSON decoding errors
     public func load() throws -> Config {
-        guard let config = try fileService.load() else {
-            throw OutfitPickerError.configurationNotFound
+        do {
+            guard let config = try fileService.load() else {
+                throw OutfitPickerError.configurationNotFound
+            }
+            return config
+        } catch let error as OutfitPickerError {
+            throw error
+        } catch {
+            throw OutfitPickerError.from(error)
         }
-        return config
     }
 
     /// Saves configuration to the filesystem.
     /// - Parameter config: Configuration object to persist
-    /// - Throws: `FileSystemError` or JSON encoding errors
+    /// - Throws: `OutfitPickerError` for any save failures
     public func save(_ config: Config) throws {
-        try fileService.save(config)
+        do {
+            try fileService.save(config)
+        } catch {
+            throw OutfitPickerError.from(error)
+        }
     }
 
     /// Deletes the configuration file from the filesystem.
-    /// - Throws: `FileSystemError` if deletion fails
+    /// - Throws: `OutfitPickerError` if deletion fails
     public func delete() throws {
-        try fileService.delete()
+        do {
+            try fileService.delete()
+        } catch {
+            throw OutfitPickerError.from(error)
+        }
     }
 }

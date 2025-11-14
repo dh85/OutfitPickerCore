@@ -1,5 +1,5 @@
 import Foundation
-import OutfitPickerCore
+@testable import OutfitPickerCore
 import OutfitPickerTestSupport
 import Testing
 

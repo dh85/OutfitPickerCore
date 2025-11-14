@@ -1,4 +1,4 @@
-import OutfitPickerCore
+@testable import OutfitPickerCore
 import OutfitPickerTestSupport
 import Testing
 
@@ -26,7 +26,7 @@ struct ConfigBuilderTests {
     }
 
     @Test func missingRoot() {
-        #expect(throws: ConfigError.missingRoot) {
+        #expect(throws: OutfitPickerError.invalidInput("Root directory must be set before building config")) {
             try ConfigBuilder().build()
         }
     }

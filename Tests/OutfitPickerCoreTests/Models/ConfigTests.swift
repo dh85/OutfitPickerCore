@@ -1,5 +1,5 @@
 import Foundation
-import OutfitPickerCore
+@testable import OutfitPickerCore
 import OutfitPickerTestSupport
 import Testing
 
@@ -35,13 +35,13 @@ struct ConfigTests {
 
     @Test("Empty root throws", arguments: ["", "   ", "\t", "\n", " \t \n "])
     func emptyRootThrows(root: String) {
-        expectConfigError(.emptyRoot, for: root)
+        expectOutfitPickerError(.invalidInput("Root directory cannot be empty"), for: root)
     }
 
     @Test("Path too long throws (>4096 chars)")
     func pathTooLongThrows() {
-        expectConfigError(
-            .pathTooLong,
+        expectOutfitPickerError(
+            .invalidConfiguration,
             for: String(repeating: "a", count: 4097)
         )
     }
@@ -66,7 +66,7 @@ struct ConfigTests {
         ]
     )
     func pathTraversalThrows(root: String) {
-        expectConfigError(.pathTraversalNotAllowed, for: root)
+        expectOutfitPickerError(.invalidConfiguration, for: root)
     }
 
     @Test(
@@ -83,7 +83,7 @@ struct ConfigTests {
         ]
     )
     func restrictedPathsThrow(root: String) {
-        expectConfigError(.restrictedPath, for: root)
+        expectOutfitPickerError(.invalidConfiguration, for: root)
     }
 
     @Test(
@@ -96,7 +96,7 @@ struct ConfigTests {
         ]
     )
     func invalidCharactersThrow(root: String) {
-        expectConfigError(.invalidCharacters, for: root)
+        expectOutfitPickerError(.invalidConfiguration, for: root)
     }
 
     @Test(
@@ -137,7 +137,7 @@ struct ConfigTests {
             ]
         )
         func windowsRestrictedPathsThrow(root: String) {
-            expectConfigError(.restrictedPath, for: root)
+            expectOutfitPickerError(.invalidConfiguration, for: root)
         }
     #endif
 
@@ -145,7 +145,7 @@ struct ConfigTests {
 
     @Test("Unsupported language throws")
     func invalidLanguageThrows() {
-        #expect(throws: ConfigError.unsupportedLanguage("invalid")) {
+        #expect(throws: OutfitPickerError.invalidConfiguration) {
             _ = try makeSUT(language: "invalid")
         }
     }
@@ -243,13 +243,13 @@ struct ConfigTests {
     func nonAsciiCharactersThrow() {
         let badPaths = ["/path/withéaccent", "/path/with😀emoji"]
         for path in badPaths {
-            expectConfigError(.invalidCharacters, for: path)
+            expectOutfitPickerError(.invalidConfiguration, for: path)
         }
     }
 
     @Test("Over-normalised path without '..' throws pathTraversalNotAllowed")
     func overNormalisedPathThrowsTraversal() {
-        expectConfigError(.pathTraversalNotAllowed, for: "/a/././././b")
+        expectOutfitPickerError(.invalidConfiguration, for: "/a/././././b")
     }
 
     // MARK: - Helpers
@@ -260,7 +260,7 @@ struct ConfigTests {
         try Config(root: root, language: language)
     }
 
-    private func expectConfigError(_ error: ConfigError, for root: String) {
+    private func expectOutfitPickerError(_ error: OutfitPickerError, for root: String) {
         #expect(throws: error) {
             _ = try makeSUT(root: root)
         }

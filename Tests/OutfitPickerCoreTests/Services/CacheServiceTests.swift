@@ -1,5 +1,5 @@
 import Foundation
-import OutfitPickerCore
+@testable import OutfitPickerCore
 import OutfitPickerTestSupport
 import Testing
 
@@ -36,7 +36,7 @@ struct CacheServiceTests {
         let (sut, _) = makeTestSetup()
         try writeCorruptData(to: sut)
 
-        #expect(throws: DecodingError.self) {
+        #expect(throws: OutfitPickerError.fileSystemError) {
             _ = try sut.load()
         }
     }
@@ -70,7 +70,7 @@ struct CacheServiceTests {
     @Test
     func directoryResolutionErrorMapsToCacheError() {
         let sut = CacheService(directoryProvider: ThrowingDirectoryProvider())
-        #expect(throws: FileSystemError.directoryNotFound) {
+        #expect(throws: OutfitPickerError.fileSystemError) {
             _ = try sut.cachePath()
         }
     }
