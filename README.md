@@ -601,9 +601,9 @@ await withTaskGroup(of: Void.self) { group in
 
 ## Requirements
 
-- iOS 13.0+ / macOS 10.15+ / tvOS 13.0+ / watchOS 6.0+
-- Swift 5.5+
-- Xcode 13.0+
+- iOS 17.0+ / macOS 14.0+ / tvOS 17.0+ / watchOS 10.0+
+- Swift 6.2+
+- Xcode 16.0+
 
 ## License
 
