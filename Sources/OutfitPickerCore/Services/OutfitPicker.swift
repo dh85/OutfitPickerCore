@@ -372,7 +372,7 @@ public protocol OutfitPickerProtocol: Sendable {
 }
 
 /// Protocol abstracting FileManager operations for testability.
-public protocol FileManagerProtocol: Sendable {
+public protocol FileManagerProtocol {
     func contentsOfDirectory(
         at url: URL,
         includingPropertiesForKeys keys: [URLResourceKey]?,

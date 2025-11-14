@@ -46,7 +46,7 @@ extension OutfitPicker {
     
     internal static func create(
         outfitDirectory: String,
-        fileManager: FileManagerProtocol
+        fileManager: sending FileManagerProtocol
     ) async throws -> OutfitPicker {
         let config = try Config(root: outfitDirectory)
         let configService = ConfigService(fileManager: fileManager)
@@ -56,7 +56,7 @@ extension OutfitPicker {
     
     internal static func create(
         configuring builder: (ConfigBuilder) -> ConfigBuilder,
-        fileManager: FileManagerProtocol
+        fileManager: sending FileManagerProtocol
     ) async throws -> OutfitPicker {
         let config = try builder(ConfigBuilder()).build()
         let configService = ConfigService(fileManager: fileManager)
