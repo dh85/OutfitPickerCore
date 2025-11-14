@@ -49,16 +49,19 @@ struct CategoryInfoTests {
         // Alphabetical order: A, B, C, D
         #expect(infos[0].category.name == "A_Empty")
         #expect(infos[0].state == .empty)
+        #expect(infos[0].outfitCount == 0)
 
         #expect(infos[1].category.name == "B_Excluded")
         #expect(infos[1].state == .userExcluded)
+        #expect(infos[1].outfitCount == 0)
 
         #expect(infos[2].category.name == "C_NoAvatar")
         #expect(infos[2].state == .noAvatarFiles)
+        #expect(infos[2].outfitCount == 0)
 
         #expect(infos[3].category.name == "D_HasOutfits")
         #expect(infos[3].state == .hasOutfits)
-        #expect(infos[3].category.outfits == ["d1.avatar", "d2.avatar"])
+        #expect(infos[3].outfitCount == 2)
     }
 
     @Test

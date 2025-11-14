@@ -18,15 +18,18 @@ public enum CategoryState: Codable, Sendable, Equatable {
 /// Combines a category with its current state information.
 ///
 /// CategoryInfo provides complete information about a category including
-/// its directory structure and current usability state.
+/// its reference and current usability state.
 public struct CategoryInfo: Sendable, Equatable {
-    /// The category directory and its outfit files
-    public let category: Category
+    /// Reference to the category
+    public let category: CategoryReference
     /// Current state of the category
     public let state: CategoryState
+    /// Number of outfit files in the category
+    public let outfitCount: Int
 
-    public init(category: Category, state: CategoryState) {
+    public init(category: CategoryReference, state: CategoryState, outfitCount: Int) {
         self.category = category
         self.state = state
+        self.outfitCount = outfitCount
     }
 }

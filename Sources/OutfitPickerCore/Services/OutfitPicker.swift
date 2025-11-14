@@ -473,7 +473,7 @@ public actor OutfitPicker: OutfitPickerProtocol, @unchecked Sendable {
 
             return infos.compactMap { info -> CategoryReference? in
                 if case .hasOutfits = info.state {
-                    return CategoryReference(name: info.category.name, path: info.category.path)
+                    return info.category
                 }
                 return nil
             }
@@ -800,21 +800,19 @@ public actor OutfitPicker: OutfitPickerProtocol, @unchecked Sendable {
             else { continue }
 
             let categoryName = url.lastPathComponent
+            let categoryPath = url.path(percentEncoded: false)
+            let categoryRef = CategoryReference(name: categoryName, path: categoryPath)
 
             if config.excludedCategories.contains(categoryName) {
-                let category = Category(path: url.path(percentEncoded: false), outfits: [])
-                categoryInfos.append(CategoryInfo(category: category, state: .userExcluded))
+                categoryInfos.append(CategoryInfo(category: categoryRef, state: .userExcluded, outfitCount: 0))
                 continue
             }
 
-            let avatarFiles = try getAvatarFiles(in: url.path(percentEncoded: false))
+            let avatarFiles = try getAvatarFiles(in: categoryPath)
             let allFiles = try fileManager.contentsOfDirectory(
                 at: url, includingPropertiesForKeys: nil, options: []
             )
             .filter { !$0.hasDirectoryPath }
-
-            let category = Category(
-                path: url.path(percentEncoded: false), outfits: avatarFiles.map(\.fileName))
 
             let state: CategoryState
             if avatarFiles.isEmpty {
@@ -823,7 +821,7 @@ public actor OutfitPicker: OutfitPickerProtocol, @unchecked Sendable {
                 state = .hasOutfits
             }
 
-            categoryInfos.append(CategoryInfo(category: category, state: state))
+            categoryInfos.append(CategoryInfo(category: categoryRef, state: state, outfitCount: avatarFiles.count))
         }
 
         return categoryInfos.sorted { $0.category.name < $1.category.name }
@@ -834,7 +832,8 @@ public actor OutfitPicker: OutfitPickerProtocol, @unchecked Sendable {
 
         var currentCategoryFiles = [String: Set<String>]()
         for info in currentCategoryInfos {
-            currentCategoryFiles[info.category.name] = Set(info.category.outfits)
+            let avatarFiles = try getAvatarFiles(in: info.category.path)
+            currentCategoryFiles[info.category.name] = Set(avatarFiles.map(\.fileName))
         }
 
         let previousCategoryFiles = config.knownCategoryFiles
@@ -892,7 +891,8 @@ public actor OutfitPicker: OutfitPickerProtocol, @unchecked Sendable {
 
         var updatedKnownCategoryFiles: [String: Set<String>] = [:]
         for info in currentCategoryInfos {
-            updatedKnownCategoryFiles[info.category.name] = Set(info.category.outfits)
+            let avatarFiles = try getAvatarFiles(in: info.category.path)
+            updatedKnownCategoryFiles[info.category.name] = Set(avatarFiles.map(\.fileName))
         }
 
         return try Config(
