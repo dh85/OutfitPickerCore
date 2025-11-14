@@ -29,6 +29,14 @@ struct CacheServiceTests {
         #expect(!fileExists(path))
     }
 
+    @Test
+    func deleteMapsErrorWhenDirectoryProviderFails() {
+        let sut = CacheService(directoryProvider: ThrowingDirectoryProvider())
+        #expect(throws: OutfitPickerError.fileSystemError) {
+            try sut.delete()
+        }
+    }
+
     // MARK: - Corruption
 
     @Test

@@ -514,4 +514,32 @@ struct ConvenienceMethodsTests {
             _ = try await env.sut.getRotationProgress(for: "")
         }
     }
+    
+    // MARK: - getRotationProgressPercentage Tests
+    
+    @Test("getRotationProgressPercentage returns 0.5 for half worn outfits")
+    func getRotationProgressPercentageReturnsHalfForHalfWornOutfits() async throws {
+        let cache = OutfitCache(categories: [
+            "casual": CategoryCache(wornOutfits: ["shirt1.avatar", "shirt2.avatar"], totalOutfits: 4)
+        ])
+        let env = try makeOutfitPickerSUTWithCategory(
+            category: "casual",
+            files: ["shirt1.avatar", "shirt2.avatar", "jeans.avatar", "dress.avatar"],
+            cache: cache
+        )
+        
+        let percentage = try await env.sut.getRotationProgressPercentage(for: "casual")
+        #expect(percentage == 0.5)
+    }
+    
+    @Test("getRotationProgressPercentage returns 1.0 for empty category")
+    func getRotationProgressPercentageReturnsOneForEmptyCategory() async throws {
+        let env = try makeOutfitPickerSUTWithCategory(
+            category: "empty",
+            files: []
+        )
+        
+        let percentage = try await env.sut.getRotationProgressPercentage(for: "empty")
+        #expect(percentage == 1.0)
+    }
 }

@@ -111,4 +111,31 @@ struct AvailableCountTests {
             #expect(error is OutfitPickerError)
         }
     }
+
+    @Test func mapsGenericError_toOutfitPickerError() async throws {
+        // Create a generic error that's not an OutfitPickerError
+        struct GenericError: Error {}
+        let sut = try makeOutfitPickerSUTWithCacheError(GenericError())
+
+        do {
+            _ = try await sut.getAvailableCount(for: "Any")
+            Issue.record("Expected OutfitPickerError")
+        } catch {
+            #expect(error is OutfitPickerError)
+        }
+    }
+
+    @Test func rethrowsOutfitPickerError() async throws {
+        // Test that OutfitPickerError is re-thrown directly
+        let sut = makeOutfitPickerSUTWithConfigError(OutfitPickerError.configurationNotFound)
+
+        do {
+            _ = try await sut.getAvailableCount(for: "Any")
+            Issue.record("Expected OutfitPickerError")
+        } catch let error as OutfitPickerError {
+            #expect(error == OutfitPickerError.configurationNotFound)
+        } catch {
+            Issue.record("Expected OutfitPickerError, got \(error)")
+        }
+    }
 }

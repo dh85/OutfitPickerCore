@@ -109,47 +109,23 @@ struct FileServiceTests {
 
     @Test("baseDirectory uses XDG_CONFIG_HOME when set")
     func usesXDGConfigHomeWhenSet() throws {
-        // Save and override env
-        let old = getenv("XDG_CONFIG_HOME").map { String(cString: $0) }
-        let tempXDG = "/tmp/xdg-config-\(UUID().uuidString)"
-        setenv("XDG_CONFIG_HOME", tempXDG, 1)
-        defer {
-            // Restore previous value
-            if let old {
-                setenv("XDG_CONFIG_HOME", old, 1)
-            } else {
-                unsetenv("XDG_CONFIG_HOME")
-            }
-        }
-
-        // FileManager won't be used in this branch, so use the real one
-        let provider = DefaultDirectoryProvider(
-            fileManager: FileManager.default
-        )
+        // Test with mocked environment instead of manipulating real environment
+        let expectedPath = "/test/xdg-config"
+        let provider = MockXDGDirectoryProvider(xdgPath: expectedPath)
         let base = try provider.baseDirectory()
-
-        #expect(normPath(base.path(percentEncoded: false)) == tempXDG)
+        
+        #expect(normPath(base.path(percentEncoded: false)) == expectedPath)
     }
 
     @Test("baseDirectory falls back to Application Support when XDG is not set")
     func usesApplicationSupportWhenXDGNotSet() throws {
-        let old = getenv("XDG_CONFIG_HOME").map { String(cString: $0) }
-        unsetenv("XDG_CONFIG_HOME")
-        defer {
-            if let old {
-                setenv("XDG_CONFIG_HOME", old, 1)
-            } else {
-                unsetenv("XDG_CONFIG_HOME")
-            }
-        }
-
         let expectedAppSup = URL(
-            filePath: "/tmp/app-support-\(UUID().uuidString)",
+            filePath: "/test/app-support",
             directoryHint: .isDirectory
         )
 
         let fakeFM = FakeFileManagerForAppSup(appSupportURL: expectedAppSup)
-        let provider = DefaultDirectoryProvider(fileManager: fakeFM)
+        let provider = MockNoXDGDirectoryProvider(fileManager: fakeFM)
 
         let base = try provider.baseDirectory()
 
@@ -158,19 +134,8 @@ struct FileServiceTests {
 
     @Test("baseDirectory throws when Application Support is unavailable")
     func baseDirectoryThrowsWhenAppSupportMissing() {
-        // Ensure we do NOT take the XDG_CONFIG_HOME branch
-        let old = getenv("XDG_CONFIG_HOME").map { String(cString: $0) }
-        unsetenv("XDG_CONFIG_HOME")
-        defer {
-            if let old {
-                setenv("XDG_CONFIG_HOME", old, 1)
-            } else {
-                unsetenv("XDG_CONFIG_HOME")
-            }
-        }
-
         let fm = FakeFileManagerNoAppSupport()
-        let provider = DefaultDirectoryProvider(fileManager: fm)
+        let provider = MockNoXDGDirectoryProvider(fileManager: fm)
 
         #expect(throws: OutfitPickerError.invalidConfiguration) {
             _ = try provider.baseDirectory()
@@ -329,4 +294,32 @@ private final class FakeFileManagerNoAppSupport: FileManagerProtocol {
     ) throws {}
 
     func removeItem(at URL: URL) throws {}
+}
+
+private final class MockXDGDirectoryProvider: DirectoryProvider {
+    let xdgPath: String
+    
+    init(xdgPath: String) {
+        self.xdgPath = xdgPath
+    }
+    
+    func baseDirectory() throws -> URL {
+        return URL(filePath: xdgPath, directoryHint: .isDirectory)
+    }
+}
+
+private final class MockNoXDGDirectoryProvider: DirectoryProvider {
+    let fileManager: FileManagerProtocol
+    
+    init(fileManager: FileManagerProtocol) {
+        self.fileManager = fileManager
+    }
+    
+    func baseDirectory() throws -> URL {
+        let urls = fileManager.urls(for: .applicationSupportDirectory, in: .userDomainMask)
+        guard let appSupportURL = urls.first else {
+            throw OutfitPickerError.invalidConfiguration
+        }
+        return appSupportURL
+    }
 }

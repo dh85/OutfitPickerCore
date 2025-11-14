@@ -34,7 +34,7 @@ public final class FakeConfigService: ConfigServiceProtocol, @unchecked Sendable
 
     /// The configured behavior mode
     public let mode: Mode
-
+    
     /// Initializes the fake service with the specified behavior mode.
     ///
     /// - Parameter mode: The behavior mode to use
@@ -67,6 +67,8 @@ public final class FakeConfigService: ConfigServiceProtocol, @unchecked Sendable
     /// - Returns: Never returns (fatal error instead)
     /// - Throws: Never throws (fatal error instead)
     public func configPath() throws -> URL { fatalError("not used") }
+    
+
 }
 
 /// Fake implementation of CacheServiceProtocol for testing.

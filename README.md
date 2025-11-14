@@ -7,7 +7,7 @@ A Swift library for intelligent outfit selection and rotation management. Outfit
 - **Intelligent Rotation**: Automatically prevents outfit repetition until all outfits in a category have been worn
 - **Category Management**: Organize outfits into categories (casual, formal, work, etc.)
 - **Multiple API Styles**: Factory methods, fluent API, batch operations, and Result-based error handling
-- **Smart Recommendations**: Context-aware outfit suggestions with confidence scoring
+
 - **Batch Operations**: Efficiently mark multiple outfits as worn or reset multiple categories
 - **Search & Filter**: Find outfits and categories by name patterns
 - **Thread-Safe**: All operations are atomic and properly synchronized
@@ -274,23 +274,7 @@ let result = try await picker.batch()
     .execute()
 ```
 
-#### Smart Recommendations
 
-```swift
-// Get context-aware recommendations
-let recommendations = try await picker.recommendations()
-    .forWeather(.sunny, temperature: 75)
-    .excludingRecentlyWorn(days: 3)
-    .withConfidence(minimum: 0.7)
-    .generate()
-
-for rec in recommendations {
-    print("\(rec.outfit.fileName) - Confidence: \(rec.confidence)")
-}
-
-// Simple recommendations
-let quickRecs = try await picker.recommendations().generate()
-```
 
 ## Examples
 
@@ -400,77 +384,7 @@ print("Blue outfits: \(blueOutfits)")
 try await manager.resetSeason(["summer", "beach", "vacation"])
 ```
 
-### Outfit Recommendation System
 
-```swift
-import OutfitPickerCore
-
-class OutfitRecommendationSystem {
-    private let picker: OutfitPicker
-    
-    init(outfitDirectory: String) throws {
-        picker = try OutfitPicker.create(outfitDirectory: outfitDirectory)
-    }
-    
-    func getRecommendations(count: Int = 3) async throws -> [OutfitRecommendation] {
-        let categories = try await picker.getCategories()
-        var recommendations: [OutfitRecommendation] = []
-        
-        for category in categories.prefix(count) {
-            if let outfit = try await picker.showRandomOutfit(from: category.name) {
-                let available = try await picker.getAvailableCount(for: category.name)
-                
-                recommendations.append(OutfitRecommendation(
-                    outfit: outfit,
-                    category: category.name,
-                    remainingInCategory: available
-                ))
-            }
-        }
-        
-        return recommendations
-    }
-    
-    func wearRecommendation(_ recommendation: OutfitRecommendation) async throws {
-        try await picker.wearOutfit(recommendation.outfit)
-    }
-}
-
-struct OutfitRecommendation {
-    let outfit: OutfitReference
-    let category: String
-    let remainingInCategory: Int
-    
-    var description: String {
-        "\(outfit.fileName) from \(category) (\(remainingInCategory) remaining)"
-    }
-}
-
-// Usage with traditional API
-let system = try OutfitRecommendationSystem(outfitDirectory: "/Users/me/Outfits")
-
-// Get recommendations
-let recommendations = try await system.getRecommendations(count: 3)
-for (index, rec) in recommendations.enumerated() {
-    print("\(index + 1). \(rec.description)")
-}
-
-// User selects recommendation 1
-if let selected = recommendations.first {
-    try await system.wearRecommendation(selected)
-    print("Wearing: \(selected.outfit.fileName)")
-}
-
-// Usage with smart recommendations API
-let smartRecs = try await system.picker.recommendations()
-    .forWeather(.cloudy, temperature: 65)
-    .excludingRecentlyWorn(days: 2)
-    .generate()
-
-for rec in smartRecs.prefix(3) {
-    print("Smart pick: \(rec.outfit.fileName) (\(Int(rec.confidence * 100))% confidence)")
-}
-```
 
 ## Error Handling
 

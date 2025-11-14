@@ -16,10 +16,7 @@ extension OutfitPicker {
     /// let outfit = try await picker.showRandomOutfit(from: "casual")
     /// ```
     public static func create(outfitDirectory: String) async throws -> OutfitPicker {
-        let config = try Config(root: outfitDirectory)
-        let configService = ConfigService()
-        try configService.save(config)
-        return OutfitPicker(configService: configService, fileManager: FileManager.default)
+        return try await create(outfitDirectory: outfitDirectory, fileManager: FileManager.default)
     }
     
     /// Creates an OutfitPicker with custom configuration using ConfigBuilder.
@@ -42,9 +39,28 @@ extension OutfitPicker {
     public static func create(
         configuring builder: (ConfigBuilder) -> ConfigBuilder
     ) async throws -> OutfitPicker {
-        let config = try builder(ConfigBuilder()).build()
-        let configService = ConfigService()
+        return try await create(configuring: builder, fileManager: FileManager.default)
+    }
+    
+    // MARK: - Internal Factory Methods for Testing
+    
+    internal static func create(
+        outfitDirectory: String,
+        fileManager: FileManagerProtocol
+    ) async throws -> OutfitPicker {
+        let config = try Config(root: outfitDirectory)
+        let configService = ConfigService(fileManager: fileManager)
         try configService.save(config)
-        return OutfitPicker(configService: configService, fileManager: FileManager.default)
+        return OutfitPicker(configService: configService, fileManager: fileManager)
+    }
+    
+    internal static func create(
+        configuring builder: (ConfigBuilder) -> ConfigBuilder,
+        fileManager: FileManagerProtocol
+    ) async throws -> OutfitPicker {
+        let config = try builder(ConfigBuilder()).build()
+        let configService = ConfigService(fileManager: fileManager)
+        try configService.save(config)
+        return OutfitPicker(configService: configService, fileManager: fileManager)
     }
 }

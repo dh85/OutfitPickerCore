@@ -29,6 +29,14 @@ struct ConfigServiceTests {
         #expect(!fileExists(path))
     }
 
+    @Test
+    func deleteMapsErrorWhenDirectoryProviderFails() {
+        let sut = ConfigService(directoryProvider: ThrowingDirectoryProvider())
+        #expect(throws: OutfitPickerError.invalidConfiguration) {
+            try sut.delete()
+        }
+    }
+
     // MARK: - Path & file naming
 
     @Test
