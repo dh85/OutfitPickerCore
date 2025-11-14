@@ -398,7 +398,7 @@ public protocol FileManagerProtocol: Sendable {
     func removeItem(at URL: URL) throws
 }
 
-extension FileManager: @retroactive FileManagerProtocol {}
+extension FileManager: @unchecked Sendable, FileManagerProtocol {}
 
 /// Main implementation of the outfit picker functionality.
 ///
