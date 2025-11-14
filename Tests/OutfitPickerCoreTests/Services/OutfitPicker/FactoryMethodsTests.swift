@@ -138,8 +138,8 @@ struct FactoryMethodsTests {
     
     @Test func factoryMethodWithRealFilesystem() {
         // Test that factory methods can be referenced (compilation test)
-        let simpleFactory: (String) async throws -> OutfitPicker = OutfitPicker.create(outfitDirectory:)
-        let builderFactory: ((ConfigBuilder) -> ConfigBuilder) async throws -> OutfitPicker = OutfitPicker.create(configuring:)
+        let _: (String) async throws -> OutfitPicker = OutfitPicker.create(outfitDirectory:)
+        let _: ((ConfigBuilder) -> ConfigBuilder) async throws -> OutfitPicker = OutfitPicker.create(configuring:)
         
         // Verify both factory methods exist (compilation test)
         #expect(Bool(true))
@@ -218,9 +218,9 @@ struct FactoryMethodsTests {
     @Test func factoryMethodBuilderExecution() {
         // Test that ConfigBuilder can be used in factory method pattern
         let builder = ConfigBuilder()
-        let configuredBuilder = builder.rootDirectory("/home/user/outfits")
-                                      .language(.spanish)
-                                      .exclude("damaged")
+        let _ = builder.rootDirectory("/home/user/outfits")
+                      .language(.spanish)
+                      .exclude("damaged")
         
         // Verify builder configuration works (compilation test)
         #expect(Bool(true))
