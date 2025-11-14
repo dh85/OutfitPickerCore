@@ -10,8 +10,8 @@
         "ghcr.io/devcontainers/features/git:1": {
             "version": "os-provided",
             "ppa": "false"
-		},
-		"ghcr.io/swift-server-community/swift-devcontainer-features/swift-format:0": {}
+        },
+        "ghcr.io/swift-server-community/swift-devcontainer-features/swift-format:0": {}
     },
     "overrideFeatureInstallOrder": [
         "ghcr.io/devcontainers/features/common-utils",
@@ -30,12 +30,14 @@
         "vscode": {
             // Set *default* container specific settings.json values on container create.
             "settings": {
-                "lldb.library": "/usr/lib/liblldb.so"
+                "lldb.library": "/usr/lib/liblldb.so",
+                "[swift]": {
+                    "editor.formatOnSave": true
+                }
             },
             // Add the IDs of extensions you want installed when the container is created.
             "extensions": [
-                "swiftlang.swift-vscode",
-                "AmazonWebServices.amazon-q-vscode"
+                "swiftlang.swift-vscode"
             ]
         }
     },

@@ -255,11 +255,11 @@ struct ConfigTests {
     #if os(macOS)
         @Test("Symlink path throws symlinkNotAllowed")
         func symlinkPathThrows() throws {
-            if ProcessInfo.processInfo.environment[
-                "OUTFITPICKER_DISABLE_SYMLINK_CHECK"
-            ] == "true" {
-                #expect(true)
-            }
+            try #require(
+                ProcessInfo.processInfo.environment["OUTFITPICKER_DISABLE_SYMLINK_CHECK"] != "true",
+                "Symlink check is disabled by environment variable"
+            )
+
             let fm = FileManager.default
 
             let home = fm.homeDirectoryForCurrentUser
