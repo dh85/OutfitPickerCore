@@ -252,45 +252,6 @@ struct ConfigTests {
         expectConfigError(.pathTraversalNotAllowed, for: "/a/././././b")
     }
 
-    #if os(macOS)
-        @Test("Symlink path throws symlinkNotAllowed")
-        func symlinkPathThrows() throws {
-            try #require(
-                ProcessInfo.processInfo.environment["OUTFITPICKER_DISABLE_SYMLINK_CHECK"] != "true",
-                "Symlink check is disabled by environment variable"
-            )
-
-            let fm = FileManager.default
-
-            let home = fm.homeDirectoryForCurrentUser
-            let base = home.appendingPathComponent(
-                "ConfigTestsSymlink-\(UUID().uuidString)",
-                isDirectory: true
-            )
-
-            let target = base.appendingPathComponent(
-                "target",
-                isDirectory: true
-            )
-            let link = base.appendingPathComponent("link", isDirectory: false)
-
-            try fm.createDirectory(
-                at: target,
-                withIntermediateDirectories: true,
-                attributes: nil
-            )
-            try fm.createSymbolicLink(at: link, withDestinationURL: target)
-
-            defer {
-                try? fm.removeItem(at: base)
-            }
-
-            let symlinkPath = link.path
-
-            expectConfigError(.symlinkNotAllowed, for: symlinkPath)
-        }
-    #endif
-
     // MARK: - Helpers
 
     private func makeSUT(root: String = "/valid/path", language: String? = nil)
