@@ -65,15 +65,12 @@ Create a directory structure for your outfits:
 ```swift
 import OutfitPickerCore
 
-// Initialize the outfit picker
-let configService = ConfigService()
-let picker = OutfitPicker(
-    configService: configService,
-    fileManager: FileManager.default
-)
+// Simple initialization - no complex setup needed
+let picker = OutfitPicker()
 
 // Create initial configuration
 let config = try Config(root: "/Users/yourname/Outfits")
+let configService = ConfigService()
 try configService.save(config)
 
 // Get a random outfit from casual category
@@ -86,6 +83,36 @@ if let outfit = try await picker.showRandomOutfit(from: "casual") {
 ```
 
 ## API Reference
+
+### Simple Initialization
+
+```swift
+// Recommended approach - automatic service setup
+let picker = OutfitPicker()
+
+// Advanced approach - custom service injection
+let configService = ConfigService()
+let cacheService = CacheService()
+let picker = OutfitPicker(
+    configService: configService,
+    cacheService: cacheService,
+    fileManager: FileManager.default
+)
+```
+
+### Type-Safe Category API
+
+```swift
+// Get categories as type-safe references
+let categories = try await picker.getCategories()
+
+// Use CategoryReference for compile-time safety
+if let casual = categories.first(where: { $0.name == "casual" }) {
+    let outfit = try await picker.showRandomOutfit(from: casual)
+    let available = try await picker.getAvailableCount(for: casual)
+    try await picker.resetCategory(casual)
+}
+```
 
 ### Core Methods
 
@@ -161,6 +188,23 @@ let changes = try await picker.detectChanges()
 try await picker.updateConfig(with: changes)
 ```
 
+#### Convenience Methods
+
+```swift
+// Check if outfit exists
+let exists = try await picker.outfitExists("blue-shirt.avatar", in: "casual")
+
+// Check if outfit has been worn
+let isWorn = try await picker.isOutfitWorn("blue-shirt.avatar", in: "casual")
+
+// Get specific outfit reference
+let outfit = try await picker.getOutfit("blue-shirt.avatar", from: "casual")
+
+// Get rotation progress
+let (worn, total) = try await picker.getRotationProgress(for: "casual")
+let percentage = try await picker.getRotationProgressPercentage(for: "casual")
+```
+
 ## Examples
 
 ### Daily Outfit Selection App
@@ -169,17 +213,12 @@ try await picker.updateConfig(with: changes)
 import OutfitPickerCore
 
 class DailyOutfitManager {
-    private let picker: OutfitPicker
+    private let picker = OutfitPicker()
     
     init(outfitDirectory: String) throws {
-        let configService = ConfigService()
-        self.picker = OutfitPicker(
-            configService: configService,
-            fileManager: FileManager.default
-        )
-        
         // Setup configuration
         let config = try Config(root: outfitDirectory)
+        let configService = ConfigService()
         try configService.save(config)
     }
     
@@ -230,16 +269,11 @@ for (category, available) in status {
 import OutfitPickerCore
 
 class WardrobeManager {
-    private let picker: OutfitPicker
+    private let picker = OutfitPicker()
     
     init(outfitDirectory: String) throws {
-        let configService = ConfigService()
-        self.picker = OutfitPicker(
-            configService: configService,
-            fileManager: FileManager.default
-        )
-        
         let config = try Config(root: outfitDirectory)
+        let configService = ConfigService()
         try configService.save(config)
     }
     
@@ -289,16 +323,11 @@ try await manager.resetSeason(["summer", "beach", "vacation"])
 import OutfitPickerCore
 
 class OutfitRecommendationSystem {
-    private let picker: OutfitPicker
+    private let picker = OutfitPicker()
     
     init(outfitDirectory: String) throws {
-        let configService = ConfigService()
-        self.picker = OutfitPicker(
-            configService: configService,
-            fileManager: FileManager.default
-        )
-        
         let config = try Config(root: outfitDirectory)
+        let configService = ConfigService()
         try configService.save(config)
     }
     

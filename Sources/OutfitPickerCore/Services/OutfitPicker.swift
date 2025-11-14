@@ -6,14 +6,30 @@ import Foundation
 /// ensuring you don't repeat outfits until all have been worn. Perfect for daily outfit
 /// selection, wardrobe management, and style rotation.
 ///
-/// ## Basic Usage
+/// ## Quick Start
 /// ```swift
+/// // Simple initialization - no configuration needed
 /// let picker = OutfitPicker()
+///
+/// // Setup your outfit directory
+/// let config = try Config(root: "/Users/me/Outfits")
+/// let configService = ConfigService()
+/// try configService.save(config)
 ///
 /// // Get a random outfit from "casual" category
 /// if let outfit = try await picker.showRandomOutfit(from: "casual") {
 ///     print("Wear: \(outfit.fileName)")
 ///     try await picker.wearOutfit(outfit)
+/// }
+/// ```
+///
+/// ## Type-Safe API
+/// Use CategoryReference for compile-time safety:
+/// ```swift
+/// let categories = try await picker.getCategories()
+/// if let casual = categories.first(where: { $0.name == "casual" }) {
+///     let outfit = try await picker.showRandomOutfit(from: casual)
+///     let available = try await picker.getAvailableCount(for: casual)
 /// }
 /// ```
 public protocol OutfitPickerProtocol: Sendable {
@@ -279,31 +295,80 @@ public protocol OutfitPickerProtocol: Sendable {
     /// ```
     func filterCategories(pattern: String) async throws -> [CategoryReference]
 
-    // MARK: - Type-Safe CategoryReference Overloads
+    // MARK: - Convenience Methods
 
-    /// Type-safe version of showRandomOutfit(from:)
-    func showRandomOutfit(from category: CategoryReference) async throws -> OutfitReference?
+    /// Checks if a specific outfit exists in a category.
+    ///
+    /// Useful for validating outfit references before operations.
+    ///
+    /// - Parameters:
+    ///   - fileName: Name of the outfit file to check
+    ///   - categoryName: Name of the category to search in
+    /// - Returns: `true` if the outfit exists, `false` otherwise
+    /// - Throws: `OutfitPickerError.categoryNotFound` if category doesn't exist
+    func outfitExists(_ fileName: String, in categoryName: String) async throws -> Bool
 
-    /// Type-safe version of getAvailableCount(for:)
-    func getAvailableCount(for category: CategoryReference) async throws -> Int
+    /// Checks if a specific outfit has been worn in the current rotation.
+    ///
+    /// Returns `false` for outfits that don't exist or haven't been worn.
+    ///
+    /// - Parameters:
+    ///   - fileName: Name of the outfit file to check
+    ///   - categoryName: Name of the category containing the outfit
+    /// - Returns: `true` if the outfit has been worn, `false` otherwise
+    func isOutfitWorn(_ fileName: String, in categoryName: String) async throws -> Bool
 
-    /// Type-safe version of resetCategory(_:)
-    func resetCategory(_ category: CategoryReference) async throws
-
-    /// Type-safe version of partialReset(categoryName:wornCount:)
-    func partialReset(category: CategoryReference, wornCount: Int) async throws
-
-    /// Type-safe version of showAllOutfits(from:)
-    func showAllOutfits(from category: CategoryReference) async throws -> [OutfitReference]
-
-    /// Type-safe version of getRotationProgress(for:)
-    func getRotationProgress(for category: CategoryReference) async throws -> (worn: Int, total: Int)
+    /// Gets a specific outfit reference by name.
+    ///
+    /// Useful for converting filename strings to OutfitReference objects.
+    ///
+    /// - Parameters:
+    ///   - fileName: Name of the outfit file to retrieve
+    ///   - categoryName: Name of the category containing the outfit
+    /// - Returns: OutfitReference if found, `nil` if outfit doesn't exist
+    /// - Throws: `OutfitPickerError.categoryNotFound` if category doesn't exist
+    func getOutfit(_ fileName: String, from categoryName: String) async throws -> OutfitReference?
 
     /// Gets the rotation progress for a category as (worn, total) counts.
+    ///
+    /// Returns the exact number of worn outfits and total outfits in the category.
+    /// Useful for displaying detailed progress information.
+    ///
+    /// - Parameter categoryName: Name of the category to check
+    /// - Returns: Tuple with worn count and total count
+    /// - Throws: `OutfitPickerError.categoryNotFound` if category doesn't exist
     func getRotationProgress(for categoryName: String) async throws -> (worn: Int, total: Int)
 
-    /// Gets the rotation progress for a category (0.0 to 1.0).
+    /// Gets the rotation progress for a category as a percentage (0.0 to 1.0).
+    ///
+    /// Returns 1.0 for empty categories. Useful for progress bars and indicators.
+    ///
+    /// - Parameter categoryName: Name of the category to check
+    /// - Returns: Progress as a decimal between 0.0 and 1.0
+    /// - Throws: `OutfitPickerError.categoryNotFound` if category doesn't exist
     func getRotationProgressPercentage(for categoryName: String) async throws -> Double
+
+    // MARK: - Type-Safe CategoryReference Overloads
+
+    /// Type-safe version of showRandomOutfit(from:) using CategoryReference.
+    ///
+    /// Eliminates typos and provides compile-time safety for category names.
+    func showRandomOutfit(from category: CategoryReference) async throws -> OutfitReference?
+
+    /// Type-safe version of getAvailableCount(for:) using CategoryReference.
+    func getAvailableCount(for category: CategoryReference) async throws -> Int
+
+    /// Type-safe version of resetCategory(_:) using CategoryReference.
+    func resetCategory(_ category: CategoryReference) async throws
+
+    /// Type-safe version of partialReset(categoryName:wornCount:) using CategoryReference.
+    func partialReset(category: CategoryReference, wornCount: Int) async throws
+
+    /// Type-safe version of showAllOutfits(from:) using CategoryReference.
+    func showAllOutfits(from category: CategoryReference) async throws -> [OutfitReference]
+
+    /// Type-safe version of getRotationProgress(for:) using CategoryReference.
+    func getRotationProgress(for category: CategoryReference) async throws -> (worn: Int, total: Int)
 }
 
 /// Protocol abstracting FileManager operations for testability.
@@ -368,13 +433,13 @@ public actor OutfitPicker: OutfitPickerProtocol, @unchecked Sendable {
         self.fileManager = fileManager
     }
 
-    /// Creates a default OutfitPicker with file-based services.
+    /// Creates a default OutfitPicker with automatic service setup.
     ///
-    /// This initializer sets up the default configuration and cache services
-    /// that save files to the user's application support directory.
+    /// This is the recommended initializer for most use cases. It automatically
+    /// configures file-based services that store data in the user's application
+    /// support directory. No additional setup required.
     ///
-    /// - Parameter fileManager: (Optional) A file manager. Defaults to `FileManager.default`.
-    ///   Provide a custom one for testing or special environments.
+    /// - Parameter fileManager: File manager for filesystem operations. Defaults to `FileManager.default`.
     public init(fileManager: FileManagerProtocol = FileManager.default) {
         self.configService = ConfigService(fileManager: fileManager)
         self.cacheService = CacheService(fileManager: fileManager)
@@ -554,8 +619,7 @@ public actor OutfitPicker: OutfitPickerProtocol, @unchecked Sendable {
         do {
             _ = try configService.load()
             let cache = try cacheService.load()
-            let updatedCache = cache.updating(
-                category: categoryName, with: CategoryCache(totalOutfits: 0))
+            let updatedCache = cache.removing(category: categoryName)
             try cacheService.save(updatedCache)
         } catch let error as OutfitPickerError {
             throw error
@@ -704,7 +768,7 @@ public actor OutfitPicker: OutfitPickerProtocol, @unchecked Sendable {
             var cache = try cacheService.load()
 
             for categoryName in categoryNames {
-                cache = cache.updating(category: categoryName, with: CategoryCache(totalOutfits: 0))
+                cache = cache.removing(category: categoryName)
             }
 
             try cacheService.save(cache)

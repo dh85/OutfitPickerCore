@@ -29,9 +29,7 @@ struct RotationResetTests {
         #expect(env.cache.saved.count == 1)
         let saved = try #require(env.cache.saved.first)
 
-        let casual = try #require(saved.categories["Casual"])
-        #expect(casual.totalOutfits == 0)
-        #expect(casual.wornOutfits.isEmpty)
+        #expect(saved.categories["Casual"] == nil) // Category removed from cache
 
         let club = try #require(saved.categories["Club"])
         #expect(club.totalOutfits == 3)

@@ -114,11 +114,9 @@ struct BatchOperationsTests {
         try await sut.resetCategories(["A", "C"])
         
         let savedCache = try #require(cacheSvc.saved.first)
-        #expect(savedCache.categories["A"]?.wornOutfits == Set<String>())
-        #expect(savedCache.categories["A"]?.totalOutfits == 0)
-        #expect(savedCache.categories["B"]?.wornOutfits == ["outfit2.avatar"])
-        #expect(savedCache.categories["C"]?.wornOutfits == Set<String>())
-        #expect(savedCache.categories["C"]?.totalOutfits == 0)
+        #expect(savedCache.categories["A"] == nil) // Category A removed from cache
+        #expect(savedCache.categories["B"]?.wornOutfits == ["outfit2.avatar"]) // Category B unchanged
+        #expect(savedCache.categories["C"] == nil) // Category C removed from cache
     }
 
     @Test func resetCategories_WithEmptyArray_DoesNothing() async throws {
@@ -150,8 +148,7 @@ struct BatchOperationsTests {
         try await sut.resetCategories(["NonExistent"])
         
         let savedCache = try #require(cacheSvc.saved.first)
-        #expect(savedCache.categories["NonExistent"]?.wornOutfits == Set<String>())
-        #expect(savedCache.categories["NonExistent"]?.totalOutfits == 0)
+        #expect(savedCache.categories["NonExistent"] == nil) // Non-existent category not added to cache
     }
 
     @Test func resetCategories_WithConfigError_ThrowsOutfitPickerError() async {

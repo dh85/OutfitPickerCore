@@ -1,16 +1,10 @@
 import Foundation
 
-/// Protocol for data I/O operations.
-///
-/// Abstracts file reading and writing operations for testability.
 public protocol DataManagerProtocol {
-    /// Reads data from a file URL
     func data(contentsOf url: URL) throws -> Data
-    /// Writes data to a file URL
     func write(_ data: Data, to url: URL) throws
 }
 
-/// Default implementation of DataManagerProtocol using Foundation APIs.
 public struct DefaultDataManager: DataManagerProtocol {
     public init() {}
 
@@ -23,17 +17,10 @@ public struct DefaultDataManager: DataManagerProtocol {
     }
 }
 
-/// Protocol for providing platform-specific directories.
-///
-/// Abstracts directory resolution for cross-platform compatibility.
 public protocol DirectoryProvider {
-    /// Returns the base directory for application data
     func baseDirectory() throws -> URL
 }
 
-/// Default implementation providing platform-appropriate directories.
-///
-/// Uses XDG_CONFIG_HOME on Linux, Application Support on macOS.
 public struct DefaultDirectoryProvider: DirectoryProvider {
     private let fileManager: any FileManagerProtocol
 
@@ -97,9 +84,6 @@ public struct FileService<T: Codable>: @unchecked Sendable {
         self.errorMapper = errorMapper
     }
 
-    /// Returns the full path to the managed file.
-    /// - Returns: URL pointing to the file location
-    /// - Throws: Mapped error if directory resolution fails
     public func filePath() throws -> URL {
         do {
             return try directoryProvider.baseDirectory()
@@ -110,9 +94,6 @@ public struct FileService<T: Codable>: @unchecked Sendable {
         }
     }
 
-    /// Loads and decodes an object from the file.
-    /// - Returns: Decoded object, or nil if file doesn't exist
-    /// - Throws: File system or JSON decoding errors
     public func load() throws -> T? {
         let url = try filePath()
         guard
@@ -127,9 +108,6 @@ public struct FileService<T: Codable>: @unchecked Sendable {
         return try JSONDecoder().decode(T.self, from: data)
     }
 
-    /// Encodes and saves an object to the file.
-    /// - Parameter object: Object to encode and save
-    /// - Throws: File system or JSON encoding errors
     public func save(_ object: T) throws {
         let url = try filePath()
         try ensureDirectoryExists(at: url.deletingLastPathComponent())
@@ -140,8 +118,6 @@ public struct FileService<T: Codable>: @unchecked Sendable {
         try dataManager.write(data, to: url)
     }
 
-    /// Deletes the file if it exists.
-    /// - Throws: File system errors if deletion fails
     public func delete() throws {
         let url = try filePath()
         if fileManager.fileExists(
