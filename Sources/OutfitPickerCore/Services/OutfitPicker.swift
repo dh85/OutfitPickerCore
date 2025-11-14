@@ -8,7 +8,7 @@ import Foundation
 ///
 /// ## Basic Usage
 /// ```swift
-/// let picker = OutfitPicker(configService: configService, fileManager: FileManager.default)
+/// let picker = OutfitPicker()
 ///
 /// // Get a random outfit from "casual" category
 /// if let outfit = try await picker.showRandomOutfit(from: "casual") {
@@ -339,6 +339,19 @@ public actor OutfitPicker: OutfitPickerProtocol, @unchecked Sendable {
     ) {
         self.configService = configService
         self.cacheService = cacheService
+        self.fileManager = fileManager
+    }
+
+    /// Creates a default OutfitPicker with file-based services.
+    ///
+    /// This initializer sets up the default configuration and cache services
+    /// that save files to the user's application support directory.
+    ///
+    /// - Parameter fileManager: (Optional) A file manager. Defaults to `FileManager.default`.
+    ///   Provide a custom one for testing or special environments.
+    public init(fileManager: FileManagerProtocol = FileManager.default) {
+        self.configService = ConfigService(fileManager: fileManager)
+        self.cacheService = CacheService(fileManager: fileManager)
         self.fileManager = fileManager
     }
 
