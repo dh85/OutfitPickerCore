@@ -375,7 +375,7 @@ struct ConvenienceMethodsTests {
     
     // MARK: - getRotationProgress Tests
     
-    @Test("getRotationProgress returns 0.0 for no worn outfits")
+    @Test("getRotationProgress returns (0, 3) for no worn outfits")
     func getRotationProgressReturnsZeroForNoWornOutfits() async throws {
         let env = try makeOutfitPickerSUTWithCategory(
             category: "casual",
@@ -383,10 +383,11 @@ struct ConvenienceMethodsTests {
         )
         
         let progress = try await env.sut.getRotationProgress(for: "casual")
-        #expect(progress == 0.0)
+        #expect(progress.worn == 0)
+        #expect(progress.total == 3)
     }
     
-    @Test("getRotationProgress returns 0.0 for rotation complete")
+    @Test("getRotationProgress returns (0, 3) for rotation complete")
     func getRotationProgressReturnsZeroForRotationComplete() async throws {
         let cache = OutfitCache(categories: [
             "casual": CategoryCache(wornOutfits: ["shirt1.avatar", "shirt2.avatar", "jeans.avatar"], totalOutfits: 3)
@@ -398,10 +399,11 @@ struct ConvenienceMethodsTests {
         )
         
         let progress = try await env.sut.getRotationProgress(for: "casual")
-        #expect(progress == 0.0) // When rotation complete, available = total, so worn = 0
+        #expect(progress.worn == 0) // When rotation complete, available = total, so worn = 0
+        #expect(progress.total == 3)
     }
     
-    @Test("getRotationProgress returns 0.5 for half worn outfits")
+    @Test("getRotationProgress returns (2, 4) for half worn outfits")
     func getRotationProgressReturnsHalfForHalfWornOutfits() async throws {
         let cache = OutfitCache(categories: [
             "casual": CategoryCache(wornOutfits: ["shirt1.avatar", "shirt2.avatar"], totalOutfits: 4)
@@ -413,22 +415,24 @@ struct ConvenienceMethodsTests {
         )
         
         let progress = try await env.sut.getRotationProgress(for: "casual")
-        #expect(progress == 0.5)
+        #expect(progress.worn == 2)
+        #expect(progress.total == 4)
     }
     
-    @Test("getRotationProgress returns 1.0 for empty category")
-    func getRotationProgressReturnsOneForEmptyCategory() async throws {
+    @Test("getRotationProgress returns (0, 0) for empty category")
+    func getRotationProgressReturnsZeroForEmptyCategory() async throws {
         let env = try makeOutfitPickerSUTWithCategory(
             category: "empty",
             files: []
         )
         
         let progress = try await env.sut.getRotationProgress(for: "empty")
-        #expect(progress == 1.0)
+        #expect(progress.worn == 0)
+        #expect(progress.total == 0)
     }
     
-    @Test("getRotationProgress calculates correct fraction for partial rotation")
-    func getRotationProgressCalculatesCorrectFraction() async throws {
+    @Test("getRotationProgress calculates correct counts for partial rotation")
+    func getRotationProgressCalculatesCorrectCounts() async throws {
         let cache = OutfitCache(categories: [
             "casual": CategoryCache(wornOutfits: ["shirt1.avatar"], totalOutfits: 3)
         ])
@@ -439,12 +443,12 @@ struct ConvenienceMethodsTests {
         )
         
         let progress = try await env.sut.getRotationProgress(for: "casual")
-        let expected = 1.0 / 3.0 // 1 worn out of 3 total
-        #expect(abs(progress - expected) < 0.0001)
+        #expect(progress.worn == 1) // 1 worn out of 3 total
+        #expect(progress.total == 3)
     }
     
-    @Test("getRotationProgress shows 1.0 for almost complete rotation")
-    func getRotationProgressShowsOneForAlmostCompleteRotation() async throws {
+    @Test("getRotationProgress shows (2, 3) for almost complete rotation")
+    func getRotationProgressShowsTwoForAlmostCompleteRotation() async throws {
         let cache = OutfitCache(categories: [
             "casual": CategoryCache(wornOutfits: ["shirt1.avatar", "shirt2.avatar"], totalOutfits: 3)
         ])
@@ -455,8 +459,8 @@ struct ConvenienceMethodsTests {
         )
         
         let progress = try await env.sut.getRotationProgress(for: "casual")
-        let expected = 2.0 / 3.0 // 2 worn out of 3 total
-        #expect(abs(progress - expected) < 0.0001)
+        #expect(progress.worn == 2) // 2 worn out of 3 total
+        #expect(progress.total == 3)
     }
     
     @Test("getRotationProgress with single outfit unworn")
@@ -467,7 +471,8 @@ struct ConvenienceMethodsTests {
         )
         
         let progress = try await env.sut.getRotationProgress(for: "casual")
-        #expect(progress == 0.0)
+        #expect(progress.worn == 0)
+        #expect(progress.total == 1)
     }
     
     @Test("getRotationProgress with single outfit worn")
@@ -482,10 +487,11 @@ struct ConvenienceMethodsTests {
         )
         
         let progress = try await env.sut.getRotationProgress(for: "casual")
-        #expect(progress == 0.0) // When rotation complete, available = total, so worn = 0
+        #expect(progress.worn == 0) // When rotation complete, available = total, so worn = 0
+        #expect(progress.total == 1)
     }
     
-    @Test("getRotationProgress returns 0.0 for non-existing category")
+    @Test("getRotationProgress returns (0, 0) for non-existing category")
     func getRotationProgressReturnsZeroForNonExistingCategory() async throws {
         let env = try makeOutfitPickerSUTWithCategory(
             category: "casual",
@@ -493,7 +499,8 @@ struct ConvenienceMethodsTests {
         )
         
         let progress = try await env.sut.getRotationProgress(for: "nonexistent")
-        #expect(progress == 1.0) // Empty category returns 1.0
+        #expect(progress.worn == 0) // Empty category returns (0, 0)
+        #expect(progress.total == 0)
     }
     
     @Test("getRotationProgress throws for empty category name")

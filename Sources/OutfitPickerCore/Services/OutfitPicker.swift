@@ -278,6 +278,32 @@ public protocol OutfitPickerProtocol: Sendable {
     /// print("Work-related categories: \(workCategories.map { $0.name })")
     /// ```
     func filterCategories(pattern: String) async throws -> [CategoryReference]
+
+    // MARK: - Type-Safe CategoryReference Overloads
+
+    /// Type-safe version of showRandomOutfit(from:)
+    func showRandomOutfit(from category: CategoryReference) async throws -> OutfitReference?
+
+    /// Type-safe version of getAvailableCount(for:)
+    func getAvailableCount(for category: CategoryReference) async throws -> Int
+
+    /// Type-safe version of resetCategory(_:)
+    func resetCategory(_ category: CategoryReference) async throws
+
+    /// Type-safe version of partialReset(categoryName:wornCount:)
+    func partialReset(category: CategoryReference, wornCount: Int) async throws
+
+    /// Type-safe version of showAllOutfits(from:)
+    func showAllOutfits(from category: CategoryReference) async throws -> [OutfitReference]
+
+    /// Type-safe version of getRotationProgress(for:)
+    func getRotationProgress(for category: CategoryReference) async throws -> (worn: Int, total: Int)
+
+    /// Gets the rotation progress for a category as (worn, total) counts.
+    func getRotationProgress(for categoryName: String) async throws -> (worn: Int, total: Int)
+
+    /// Gets the rotation progress for a category (0.0 to 1.0).
+    func getRotationProgressPercentage(for categoryName: String) async throws -> Double
 }
 
 /// Protocol abstracting FileManager operations for testability.
@@ -771,14 +797,18 @@ public actor OutfitPicker: OutfitPickerProtocol, @unchecked Sendable {
         return outfits.first { $0.fileName == fileName }
     }
 
-    /// Gets the rotation progress for a category (0.0 to 1.0).
-    public func getRotationProgress(for categoryName: String) async throws -> Double {
+    /// Gets the rotation progress for a category as (worn, total) counts.
+    public func getRotationProgress(for categoryName: String) async throws -> (worn: Int, total: Int) {
         let available = try await getAvailableCount(for: categoryName)
         let total = try await showAllOutfits(from: categoryName).count
-
-        guard total > 0 else { return 1.0 }
-
         let worn = total - available
+        return (worn: worn, total: total)
+    }
+
+    /// Gets the rotation progress for a category (0.0 to 1.0).
+    public func getRotationProgressPercentage(for categoryName: String) async throws -> Double {
+        let (worn, total) = try await getRotationProgress(for: categoryName)
+        guard total > 0 else { return 1.0 }
         return Double(worn) / Double(total)
     }
 
@@ -915,5 +945,33 @@ public actor OutfitPicker: OutfitPickerProtocol, @unchecked Sendable {
             knownCategories: updatedKnownCategories,
             knownCategoryFiles: updatedKnownCategoryFiles
         )
+    }
+}
+
+// MARK: - Type-Safe CategoryReference Default Implementations
+
+extension OutfitPickerProtocol {
+    public func showRandomOutfit(from category: CategoryReference) async throws -> OutfitReference? {
+        return try await showRandomOutfit(from: category.name)
+    }
+
+    public func getAvailableCount(for category: CategoryReference) async throws -> Int {
+        return try await getAvailableCount(for: category.name)
+    }
+
+    public func resetCategory(_ category: CategoryReference) async throws {
+        try await resetCategory(category.name)
+    }
+
+    public func partialReset(category: CategoryReference, wornCount: Int) async throws {
+        try await partialReset(categoryName: category.name, wornCount: wornCount)
+    }
+
+    public func showAllOutfits(from category: CategoryReference) async throws -> [OutfitReference] {
+        return try await showAllOutfits(from: category.name)
+    }
+
+    public func getRotationProgress(for category: CategoryReference) async throws -> (worn: Int, total: Int) {
+        return try await getRotationProgress(for: category.name)
     }
 }
