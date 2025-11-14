@@ -54,4 +54,4 @@
 @_exported import struct OutfitPickerCore.Config
 @_exported import struct OutfitPickerCore.OutfitCache
 // Re-export all public APIs from the organized modules
-@_exported import struct OutfitPickerCore.OutfitPicker
+@_exported import class OutfitPickerCore.OutfitPicker
