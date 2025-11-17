@@ -368,7 +368,9 @@ public protocol OutfitPickerProtocol: Sendable {
     func showAllOutfits(from category: CategoryReference) async throws -> [OutfitReference]
 
     /// Type-safe version of getRotationProgress(for:) using CategoryReference.
-    func getRotationProgress(for category: CategoryReference) async throws -> (worn: Int, total: Int)
+    func getRotationProgress(for category: CategoryReference) async throws -> (
+        worn: Int, total: Int
+    )
 }
 
 /// Protocol abstracting FileManager operations for testability.
@@ -862,7 +864,9 @@ public actor OutfitPicker: OutfitPickerProtocol, @unchecked Sendable {
     }
 
     /// Gets the rotation progress for a category as (worn, total) counts.
-    public func getRotationProgress(for categoryName: String) async throws -> (worn: Int, total: Int) {
+    public func getRotationProgress(for categoryName: String) async throws -> (
+        worn: Int, total: Int
+    ) {
         let available = try await getAvailableCount(for: categoryName)
         let total = try await showAllOutfits(from: categoryName).count
         let worn = total - available
@@ -911,7 +915,8 @@ public actor OutfitPicker: OutfitPickerProtocol, @unchecked Sendable {
             let categoryRef = CategoryReference(name: categoryName, path: categoryPath)
 
             if config.excludedCategories.contains(categoryName) {
-                categoryInfos.append(CategoryInfo(category: categoryRef, state: .userExcluded, outfitCount: 0))
+                categoryInfos.append(
+                    CategoryInfo(category: categoryRef, state: .userExcluded, outfitCount: 0))
                 continue
             }
 
@@ -928,7 +933,8 @@ public actor OutfitPicker: OutfitPickerProtocol, @unchecked Sendable {
                 state = .hasOutfits
             }
 
-            categoryInfos.append(CategoryInfo(category: categoryRef, state: state, outfitCount: avatarFiles.count))
+            categoryInfos.append(
+                CategoryInfo(category: categoryRef, state: state, outfitCount: avatarFiles.count))
         }
 
         return categoryInfos.sorted { $0.category.name < $1.category.name }
@@ -1015,7 +1021,8 @@ public actor OutfitPicker: OutfitPickerProtocol, @unchecked Sendable {
 // MARK: - Type-Safe CategoryReference Default Implementations
 
 extension OutfitPickerProtocol {
-    public func showRandomOutfit(from category: CategoryReference) async throws -> OutfitReference? {
+    public func showRandomOutfit(from category: CategoryReference) async throws -> OutfitReference?
+    {
         return try await showRandomOutfit(from: category.name)
     }
 
@@ -1035,7 +1042,9 @@ extension OutfitPickerProtocol {
         return try await showAllOutfits(from: category.name)
     }
 
-    public func getRotationProgress(for category: CategoryReference) async throws -> (worn: Int, total: Int) {
+    public func getRotationProgress(for category: CategoryReference) async throws -> (
+        worn: Int, total: Int
+    ) {
         return try await getRotationProgress(for: category.name)
     }
 }

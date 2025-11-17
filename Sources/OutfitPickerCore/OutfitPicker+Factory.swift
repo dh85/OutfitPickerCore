@@ -18,7 +18,7 @@ extension OutfitPicker {
     public static func create(outfitDirectory: String) async throws -> OutfitPicker {
         return try await create(outfitDirectory: outfitDirectory, fileManager: FileManager.default)
     }
-    
+
     /// Creates an OutfitPicker with custom configuration using ConfigBuilder.
     ///
     /// Use this when you need more control over the configuration, such as
@@ -41,9 +41,9 @@ extension OutfitPicker {
     ) async throws -> OutfitPicker {
         return try await create(configuring: builder, fileManager: FileManager.default)
     }
-    
+
     // MARK: - Internal Factory Methods for Testing
-    
+
     internal static func create(
         outfitDirectory: String,
         fileManager: sending FileManagerProtocol
@@ -53,7 +53,7 @@ extension OutfitPicker {
         try configService.save(config)
         return OutfitPicker(configService: configService, fileManager: fileManager)
     }
-    
+
     internal static func create(
         configuring builder: (ConfigBuilder) -> ConfigBuilder,
         fileManager: sending FileManagerProtocol

@@ -8,11 +8,10 @@ struct OutfitReferenceTests {
 
     @Test("filePath behavior")
     func filePathBehavior() {
-        let testCases:
-            [(fileName: String, categoryPath: String, expectedPath: String)] = [
-                ("shirt.avatar", "/test/path", "/test/path/shirt.avatar"),
-                ("jeans.avatar", "/test/path/", "/test/path/jeans.avatar"),
-            ]
+        let testCases: [(fileName: String, categoryPath: String, expectedPath: String)] = [
+            ("shirt.avatar", "/test/path", "/test/path/shirt.avatar"),
+            ("jeans.avatar", "/test/path/", "/test/path/jeans.avatar"),
+        ]
 
         for (fileName, categoryPath, expectedPath) in testCases {
             let outfit = OutfitReference(
@@ -27,7 +26,7 @@ struct OutfitReferenceTests {
     func descriptionAndEquatable() {
         let category = CategoryReference(name: "casual", path: "/test/path")
         #expect(category.description == "casual")
-        
+
         let outfit = OutfitReference(
             fileName: "shirt.avatar",
             category: category

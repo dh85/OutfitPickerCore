@@ -21,7 +21,9 @@ extension OutfitPicker {
     ///     print("Error: \(error)")
     /// }
     /// ```
-    public func randomOutfit(from categoryName: String) async -> OutfitPickerResult<OutfitReference?> {
+    public func randomOutfit(from categoryName: String) async -> OutfitPickerResult<
+        OutfitReference?
+    > {
         do {
             let outfit = try await showRandomOutfit(from: categoryName)
             return .success(outfit)
@@ -29,7 +31,7 @@ extension OutfitPicker {
             return .failure(OutfitPickerError.from(error))
         }
     }
-    
+
     /// Result-based version of wearOutfit for cleaner error handling.
     public func wear(_ outfit: OutfitReference) async -> OutfitPickerResult<Void> {
         do {
@@ -39,7 +41,7 @@ extension OutfitPicker {
             return .failure(OutfitPickerError.from(error))
         }
     }
-    
+
     /// Result-based version of getCategories for cleaner error handling.
     public func availableCategories() async -> OutfitPickerResult<[CategoryReference]> {
         do {
@@ -49,7 +51,7 @@ extension OutfitPicker {
             return .failure(OutfitPickerError.from(error))
         }
     }
-    
+
     /// Result-based version of resetCategory for cleaner error handling.
     public func reset(category: String) async -> OutfitPickerResult<Void> {
         do {

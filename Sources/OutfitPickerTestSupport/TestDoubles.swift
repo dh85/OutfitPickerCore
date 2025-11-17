@@ -59,8 +59,7 @@ public struct ThrowingDirectoryProvider: DirectoryProvider {
     /// Initializes with a specific error to throw.
     ///
     /// - Parameter error: The error to throw (defaults to generic NSError)
-    public init(_ error: Error = NSError(domain: "dir", code: 1, userInfo: nil))
-    {
+    public init(_ error: Error = NSError(domain: "dir", code: 1, userInfo: nil)) {
         self.error = error
     }
 
@@ -91,8 +90,7 @@ public struct ThrowingDataManager: DataManagerProtocol, @unchecked Sendable {
     /// Initializes with a specific error to throw on writes.
     ///
     /// - Parameter error: The error to throw (defaults to generic I/O error)
-    public init(_ error: Error = NSError(domain: "io", code: 5, userInfo: nil))
-    {
+    public init(_ error: Error = NSError(domain: "io", code: 5, userInfo: nil)) {
         self.error = error
     }
 
@@ -123,8 +121,7 @@ public struct ThrowingDataManager: DataManagerProtocol, @unchecked Sendable {
 /// let service = FileService(dataManager: dataManager)
 /// // Read operations will fail with the specified error
 /// ```
-public struct ThrowingReadDataManager: DataManagerProtocol, @unchecked Sendable
-{
+public struct ThrowingReadDataManager: DataManagerProtocol, @unchecked Sendable {
     /// The error to throw from read operations
     public let error: Error
 

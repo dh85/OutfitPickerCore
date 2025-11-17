@@ -170,7 +170,8 @@ public final class ConfigBuilder: @unchecked Sendable {
     /// - Returns: A validated Config instance
     public func build() throws -> Config {
         guard let rootPath else {
-            throw OutfitPickerError.invalidInput("Root directory must be set before building config")
+            throw OutfitPickerError.invalidInput(
+                "Root directory must be set before building config")
         }
 
         return try Config(

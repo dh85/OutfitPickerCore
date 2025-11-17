@@ -30,13 +30,12 @@ struct RotationProgressTests {
     @Test("available count behavior")
     func availableCountBehavior() {
         let cat = CategoryReference(name: "x", path: "/x")
-        let testCases:
-            [(worn: Int, total: Int, isComplete: Bool, expectedAvailable: Int)] =
-                [
-                    (4, 4, true, 4),
-                    (3, 4, false, 1),
-                    (5, 4, false, -1),
-                ]
+        let testCases: [(worn: Int, total: Int, isComplete: Bool, expectedAvailable: Int)] =
+            [
+                (4, 4, true, 4),
+                (3, 4, false, 1),
+                (5, 4, false, -1),
+            ]
 
         for (worn, total, isComplete, expectedAvailable) in testCases {
             let progress = RotationProgress(

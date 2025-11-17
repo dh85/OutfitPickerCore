@@ -1,7 +1,8 @@
 import Foundation
-@testable import OutfitPickerCore
 import OutfitPickerTestSupport
 import Testing
+
+@testable import OutfitPickerCore
 
 @Suite
 struct RandomOutfitAcrossCategoriesTests {
@@ -24,7 +25,7 @@ struct RandomOutfitAcrossCategoriesTests {
                 "Good": ["g1.avatar", "g2.avatar"],
             ]
         )
-        
+
         let env = try makeOutfitPickerSUT(
             root: root,
             config: try Config(
@@ -143,7 +144,7 @@ struct RandomOutfitAcrossCategoriesTests {
         let sut = makeOutfitPickerSUTWithConfigError(
             ConfigError.pathTraversalNotAllowed
         )
-        
+
         do {
             _ = try await sut.showRandomOutfitAcrossCategories()
             Issue.record("Expected invalidConfiguration")
@@ -156,7 +157,7 @@ struct RandomOutfitAcrossCategoriesTests {
         let sut = try makeOutfitPickerSUTWithFileSystemError(
             FileSystemError.operationFailed
         )
-        
+
         do {
             _ = try await sut.showRandomOutfitAcrossCategories()
             Issue.record("Expected fileSystemError")

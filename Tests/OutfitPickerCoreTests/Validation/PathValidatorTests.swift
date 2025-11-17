@@ -12,14 +12,14 @@ struct PathValidatorTests {
     @Test
     func platformRestrictedPathsContainsExpectedPaths() {
         let restrictedPaths = PathValidator.platformRestrictedPaths
-        
+
         #if os(Windows)
-        #expect(restrictedPaths.contains("C:\\Windows\\System32"))
-        #expect(restrictedPaths.contains("C:\\Program Files"))
+            #expect(restrictedPaths.contains("C:\\Windows\\System32"))
+            #expect(restrictedPaths.contains("C:\\Program Files"))
         #else
-        #expect(restrictedPaths.contains("/etc"))
-        #expect(restrictedPaths.contains("/usr"))
-        #expect(restrictedPaths.contains("/bin"))
+            #expect(restrictedPaths.contains("/etc"))
+            #expect(restrictedPaths.contains("/usr"))
+            #expect(restrictedPaths.contains("/bin"))
         #endif
     }
 }

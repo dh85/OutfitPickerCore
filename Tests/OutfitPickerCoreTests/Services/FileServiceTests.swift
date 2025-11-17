@@ -1,7 +1,8 @@
 import Foundation
-@testable import OutfitPickerCore
 import OutfitPickerTestSupport
 import Testing
+
+@testable import OutfitPickerCore
 
 #if os(Linux)
     import Glibc
@@ -113,7 +114,7 @@ struct FileServiceTests {
         let expectedPath = "/test/xdg-config"
         let provider = MockXDGDirectoryProvider(xdgPath: expectedPath)
         let base = try provider.baseDirectory()
-        
+
         #expect(normPath(base.path(percentEncoded: false)) == expectedPath)
     }
 
@@ -298,11 +299,11 @@ private final class FakeFileManagerNoAppSupport: FileManagerProtocol {
 
 private final class MockXDGDirectoryProvider: DirectoryProvider {
     let xdgPath: String
-    
+
     init(xdgPath: String) {
         self.xdgPath = xdgPath
     }
-    
+
     func baseDirectory() throws -> URL {
         return URL(filePath: xdgPath, directoryHint: .isDirectory)
     }
@@ -310,11 +311,11 @@ private final class MockXDGDirectoryProvider: DirectoryProvider {
 
 private final class MockNoXDGDirectoryProvider: DirectoryProvider {
     let fileManager: FileManagerProtocol
-    
+
     init(fileManager: FileManagerProtocol) {
         self.fileManager = fileManager
     }
-    
+
     func baseDirectory() throws -> URL {
         let urls = fileManager.urls(for: .applicationSupportDirectory, in: .userDomainMask)
         guard let appSupportURL = urls.first else {
