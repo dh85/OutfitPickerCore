@@ -75,6 +75,25 @@ public func fileExists(_ url: URL) -> Bool {
 
 // MARK: - Path Helpers
 
+/// Creates a temporary directory, executes the closure, and cleans up automatically.
+///
+/// - Parameter body: Closure that receives the temporary directory URL
+/// - Returns: The result of the closure
+/// - Throws: Any error thrown by the closure
+///
+/// ## Usage Example
+/// ```swift
+/// try withTempDir { tempDir in
+///     let sut = ConfigService(directoryProvider: FixedDirectoryProvider(url: tempDir))
+///     try sut.save(config)
+/// } // Automatic cleanup
+/// ```
+public func withTempDir<T>(_ body: (URL) throws -> T) rethrows -> T {
+    let dir = uniqueTempDir()
+    defer { try? FileManager.default.removeItem(at: dir) }
+    return try body(dir)
+}
+
 /// Normalizes a path by removing trailing slashes.
 ///
 /// - Parameter p: The path string to normalize

@@ -10,24 +10,28 @@ struct ConfigServiceTests {
 
     @Test
     func saveThenLoadRoundTrip() throws {
-        let (sut, _) = makeTestSetup()
-        let original = try sampleConfig()
+        try withTempDir { tempDir in
+            let sut = makeTestSetup(tempDir: tempDir)
+            let original = try sampleConfig()
 
-        try sut.save(original)
-        let loaded = try sut.load()
+            try sut.save(original)
+            let loaded = try sut.load()
 
-        #expect(loaded == original)
+            #expect(loaded == original)
+        }
     }
 
     // MARK: - Delete
 
     @Test
     func deleteRemovesFile() throws {
-        let (sut, path) = try makeTestSetupWithSavedConfig()
-        #expect(fileExists(path))
+        try withTempDir { tempDir in
+            let (sut, path) = try makeTestSetupWithSavedConfig(tempDir: tempDir)
+            #expect(fileExists(path))
 
-        try sut.delete()
-        #expect(!fileExists(path))
+            try sut.delete()
+            #expect(!fileExists(path))
+        }
     }
 
     @Test
@@ -42,21 +46,25 @@ struct ConfigServiceTests {
 
     @Test
     func configUsesCorrectFileNameAndAppFolder() throws {
-        let (sut, _) = makeTestSetup()
-        let path = try sut.configPath()
+        try withTempDir { tempDir in
+            let sut = makeTestSetup(tempDir: tempDir)
+            let path = try sut.configPath()
 
-        #expect(path.lastPathComponent == "config.json")
-        #expect(path.path(percentEncoded: false).contains("outfitpicker"))
+            #expect(path.lastPathComponent == "config.json")
+            #expect(path.path(percentEncoded: false).contains("outfitpicker"))
+        }
     }
 
     // MARK: - Missing file handling
 
     @Test
-    func loadThrowsWhenConfigFileIsMissing() {
-        let (sut, _) = makeTestSetup()
+    func loadThrowsWhenConfigFileIsMissing() throws {
+        withTempDir { tempDir in
+            let sut = makeTestSetup(tempDir: tempDir)
 
-        #expect(throws: OutfitPickerError.configurationNotFound) {
-            _ = try sut.load()
+            #expect(throws: OutfitPickerError.configurationNotFound) {
+                _ = try sut.load()
+            }
         }
     }
 
@@ -64,11 +72,13 @@ struct ConfigServiceTests {
 
     @Test
     func loadThrowsOnCorruptJSON() throws {
-        let (sut, _) = makeTestSetup()
-        try writeCorruptData(to: sut)
+        try withTempDir { tempDir in
+            let sut = makeTestSetup(tempDir: tempDir)
+            try writeCorruptData(to: sut)
 
-        #expect(throws: OutfitPickerError.fileSystemError) {
-            _ = try sut.load()
+            #expect(throws: OutfitPickerError.fileSystemError) {
+                _ = try sut.load()
+            }
         }
     }
 
@@ -76,23 +86,27 @@ struct ConfigServiceTests {
 
     @Test
     func saveCreatesMissingDirectories() throws {
-        let (sut, _) = makeTestSetup()
+        try withTempDir { tempDir in
+            let sut = makeTestSetup(tempDir: tempDir)
 
-        try sut.save(try sampleConfig())
-        let path = try sut.configPath()
-        #expect(fileExists(path))
+            try sut.save(try sampleConfig())
+            let path = try sut.configPath()
+            #expect(fileExists(path))
+        }
     }
 
     // MARK: - Write errors
 
     @Test
-    func writeFailureSurfaces() {
-        let sut = ConfigService(
-            dataManager: ThrowingDataManager(),
-            directoryProvider: FixedDirectoryProvider(url: uniqueTempDir())
-        )
-        #expect(throws: Error.self) {
-            try sut.save(try sampleConfig())
+    func writeFailureSurfaces() throws {
+        withTempDir { tempDir in
+            let sut = ConfigService(
+                dataManager: ThrowingDataManager(),
+                directoryProvider: FixedDirectoryProvider(url: tempDir)
+            )
+            #expect(throws: Error.self) {
+                try sut.save(try sampleConfig())
+            }
         }
     }
 
@@ -108,16 +122,14 @@ struct ConfigServiceTests {
 
     // MARK: - Helpers
 
-    private func makeTestSetup() -> (ConfigService, URL) {
-        let base = uniqueTempDir()
-        let sut = ConfigService(
-            directoryProvider: FixedDirectoryProvider(url: base)
+    private func makeTestSetup(tempDir: URL) -> ConfigService {
+        ConfigService(
+            directoryProvider: FixedDirectoryProvider(url: tempDir)
         )
-        return (sut, base)
     }
 
-    private func makeTestSetupWithSavedConfig() throws -> (ConfigService, URL) {
-        let (sut, _) = makeTestSetup()
+    private func makeTestSetupWithSavedConfig(tempDir: URL) throws -> (ConfigService, URL) {
+        let sut = makeTestSetup(tempDir: tempDir)
         try sut.save(try sampleConfig())
         let path = try sut.configPath()
         return (sut, path)
