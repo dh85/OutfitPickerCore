@@ -337,7 +337,7 @@ import Testing
     let env = try makeSingleCategorySUT(
         root: safeRoot,
         category: categoryName,
-        files: [fileName]
+        files: [fileName, "pants.avatar"]  // 2 outfits so wearing 1 doesn't complete rotation
     )
 
     let outfit = makeOutfitReference(

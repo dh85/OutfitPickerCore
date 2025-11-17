@@ -111,11 +111,11 @@ public final class FakeCacheService: CacheServiceProtocol, @unchecked Sendable {
 
     /// Loads cache according to the configured mode.
     ///
-    /// - Returns: The configured OutfitCache object
+    /// - Returns: The last saved cache if any, otherwise the configured OutfitCache object
     /// - Throws: The configured error if in throwsOnLoad mode
     public func load() throws -> OutfitCache {
         switch mode {
-        case .ok(let c): return c
+        case .ok(let c): return saved.last ?? c
         case .throwsOnLoad(let e): throw e
         }
     }

@@ -552,9 +552,21 @@ public actor OutfitPicker: OutfitPickerProtocol, @unchecked Sendable {
 
             if !categoryCache.wornOutfits.contains(outfit.fileName) {
                 categoryCache = categoryCache.adding(outfit.fileName)
-                let updatedOutfitCache = cache.updating(
-                    category: outfit.category.name, with: categoryCache)
-                try cacheService.save(updatedOutfitCache)
+                
+                // Check if this completes the rotation
+                if categoryCache.wornOutfits.count >= files.count {
+                    // Reset the category
+                    let resetCache = CategoryCache(totalOutfits: files.count)
+                    let updatedOutfitCache = cache.updating(
+                        category: outfit.category.name, with: resetCache)
+                    try cacheService.save(updatedOutfitCache)
+                    // Notify client that rotation completed and category was reset
+                    throw OutfitPickerError.rotationCompleted(category: outfit.category.name)
+                } else {
+                    let updatedOutfitCache = cache.updating(
+                        category: outfit.category.name, with: categoryCache)
+                    try cacheService.save(updatedOutfitCache)
+                }
             }
         } catch let error as OutfitPickerError {
             throw error
