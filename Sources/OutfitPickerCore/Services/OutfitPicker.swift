@@ -542,7 +542,9 @@ public actor OutfitPicker: OutfitPickerProtocol, @unchecked Sendable {
                 .path(percentEncoded: false)
 
             let files = try getAvatarFiles(in: categoryPath)
+            print("DEBUG: Found \(files.count) files in category")
             guard files.contains(where: { $0.fileName == outfit.fileName }) else {
+                print("DEBUG: Outfit \(outfit.fileName) not found in files")
                 throw OutfitPickerError.noOutfitsAvailable
             }
 
@@ -550,11 +552,21 @@ public actor OutfitPicker: OutfitPickerProtocol, @unchecked Sendable {
             var categoryCache =
                 cache.categories[outfit.category.name] ?? CategoryCache(totalOutfits: files.count)
 
+            print("DEBUG: Current worn outfits: \(categoryCache.wornOutfits)")
+            print(
+                "DEBUG: Checking if \(outfit.fileName) is already worn: \(categoryCache.wornOutfits.contains(outfit.fileName))"
+            )
+
             if !categoryCache.wornOutfits.contains(outfit.fileName) {
+                print("DEBUG: Adding \(outfit.fileName) to worn outfits")
                 categoryCache = categoryCache.adding(outfit.fileName)
-                
+
+                print(
+                    "DEBUG: After adding - worn count: \(categoryCache.wornOutfits.count), total files: \(files.count)"
+                )
                 // Check if this completes the rotation
                 if categoryCache.wornOutfits.count >= files.count {
+                    print("DEBUG: Rotation completed! Resetting cache and throwing error")
                     // Reset the category
                     let resetCache = CategoryCache(totalOutfits: files.count)
                     let updatedOutfitCache = cache.updating(
@@ -563,10 +575,13 @@ public actor OutfitPicker: OutfitPickerProtocol, @unchecked Sendable {
                     // Notify client that rotation completed and category was reset
                     throw OutfitPickerError.rotationCompleted(category: outfit.category.name)
                 } else {
+                    print("DEBUG: Saving updated cache")
                     let updatedOutfitCache = cache.updating(
                         category: outfit.category.name, with: categoryCache)
                     try cacheService.save(updatedOutfitCache)
                 }
+            } else {
+                print("DEBUG: Outfit already worn - doing nothing")
             }
         } catch let error as OutfitPickerError {
             throw error
