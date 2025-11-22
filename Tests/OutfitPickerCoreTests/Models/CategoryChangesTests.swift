@@ -7,27 +7,26 @@ struct CategoryChangesTests {
 
     @Test("hasChanges and isEmpty behavior")
     func hasChangesAndIsEmptyBehavior() {
-        let testCases:
-            [(changes: CategoryChanges, hasChanges: Bool, description: String)] =
-                [
-                    (.init(), false, "no changes"),
-                    (.init(newCategories: ["casual"]), true, "new only"),
-                    (
-                        .init(deletedCategories: ["formal"]), true,
-                        "deleted only"
-                    ),
-                    (
-                        .init(changedCategories: ["summer"]), true,
-                        "changed only"
-                    ),
-                    (
-                        .init(
-                            newCategories: ["casual"],
-                            deletedCategories: ["formal"],
-                            changedCategories: ["summer"]
-                        ), true, "mixed changes"
-                    ),
-                ]
+        let testCases: [(changes: CategoryChanges, hasChanges: Bool, description: String)] =
+            [
+                (.init(), false, "no changes"),
+                (.init(newCategories: ["casual"]), true, "new only"),
+                (
+                    .init(deletedCategories: ["formal"]), true,
+                    "deleted only"
+                ),
+                (
+                    .init(changedCategories: ["summer"]), true,
+                    "changed only"
+                ),
+                (
+                    .init(
+                        newCategories: ["casual"],
+                        deletedCategories: ["formal"],
+                        changedCategories: ["summer"]
+                    ), true, "mixed changes"
+                ),
+            ]
 
         for (changes, expectedHasChanges, _) in testCases {
             #expect(changes.hasChanges == expectedHasChanges)

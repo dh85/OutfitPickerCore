@@ -22,8 +22,7 @@ import OutfitPickerCore
 /// // Error case
 /// let service = FakeConfigService(.throwsError(ConfigError.missingRoot))
 /// ```
-public final class FakeConfigService: ConfigServiceProtocol, @unchecked Sendable
-{
+public final class FakeConfigService: ConfigServiceProtocol, @unchecked Sendable {
     /// Defines the behavior mode for the fake service.
     public enum Mode {
         /// Returns the provided configuration successfully
@@ -34,7 +33,7 @@ public final class FakeConfigService: ConfigServiceProtocol, @unchecked Sendable
 
     /// The configured behavior mode
     public let mode: Mode
-    
+
     /// Initializes the fake service with the specified behavior mode.
     ///
     /// - Parameter mode: The behavior mode to use
@@ -67,7 +66,6 @@ public final class FakeConfigService: ConfigServiceProtocol, @unchecked Sendable
     /// - Returns: Never returns (fatal error instead)
     /// - Throws: Never throws (fatal error instead)
     public func configPath() throws -> URL { fatalError("not used") }
-    
 
 }
 
@@ -113,11 +111,11 @@ public final class FakeCacheService: CacheServiceProtocol, @unchecked Sendable {
 
     /// Loads cache according to the configured mode.
     ///
-    /// - Returns: The configured OutfitCache object
+    /// - Returns: The last saved cache if any, otherwise the configured OutfitCache object
     /// - Throws: The configured error if in throwsOnLoad mode
     public func load() throws -> OutfitCache {
         switch mode {
-        case .ok(let c): return c
+        case .ok(let c): return saved.last ?? c
         case .throwsOnLoad(let e): throw e
         }
     }

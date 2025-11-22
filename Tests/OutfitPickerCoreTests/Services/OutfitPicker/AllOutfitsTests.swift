@@ -1,7 +1,8 @@
 import Foundation
-@testable import OutfitPickerCore
 import OutfitPickerTestSupport
 import Testing
+
+@testable import OutfitPickerCore
 
 @Suite
 struct AllOutfitsTests {

@@ -1,7 +1,8 @@
 import Foundation
-@testable import OutfitPickerCore
 import OutfitPickerTestSupport
 import Testing
+
+@testable import OutfitPickerCore
 
 #if os(Linux)
     import Glibc
@@ -18,40 +19,50 @@ private enum DummyError: Error { case mapped }
 struct FileServiceTests {
 
     @Test func loadReturnsNilWhenMissing() throws {
-        let sut = makeTestSUT(fileName: "missing.json")
-        let m: TestModel? = try sut.load()
-        #expect(m == nil)
+        try withTempDir { tempDir in
+            let sut = makeTestSUT(fileName: "missing.json", tempDir: tempDir)
+            let m: TestModel? = try sut.load()
+            #expect(m == nil)
+        }
     }
 
     @Test func loadThrowsWhenReadFailsBeforeDecode() throws {
-        let (sut, _) = try makeTestSUTWithFile(
-            fileName: "readfail.json",
-            dataManager: ThrowingReadDataManager()
-        )
+        try withTempDir { tempDir in
+            let (sut, _) = try makeTestSUTWithFile(
+                fileName: "readfail.json",
+                dataManager: ThrowingReadDataManager(),
+                tempDir: tempDir
+            )
 
-        #expect(throws: Error.self) { let _: TestModel? = try sut.load() }
+            #expect(throws: Error.self) { let _: TestModel? = try sut.load() }
+        }
     }
 
     @Test func loadThrowsOnCorruptJSON() throws {
-        let (sut, _) = try makeTestSUTWithFile(
-            fileName: "bad.json",
-            dataManager: CorruptingDataManager()
-        )
+        try withTempDir { tempDir in
+            let (sut, _) = try makeTestSUTWithFile(
+                fileName: "bad.json",
+                dataManager: CorruptingDataManager(),
+                tempDir: tempDir
+            )
 
-        #expect(throws: DecodingError.self) {
-            let _: TestModel? = try sut.load()
+            #expect(throws: DecodingError.self) {
+                let _: TestModel? = try sut.load()
+            }
         }
     }
 
     @Test func saveCreatesDirAndWrites() throws {
-        let recorder = RecordingDataManager()
-        let sut = makeTestSUT(fileName: "model.json", dataManager: recorder)
+        try withTempDir { tempDir in
+            let recorder = RecordingDataManager()
+            let sut = makeTestSUT(fileName: "model.json", dataManager: recorder, tempDir: tempDir)
 
-        try sut.save(sampleModel())
+            try sut.save(sampleModel())
 
-        let p = try sut.filePath()
-        #expect(fileExists(p))
-        #expect(recorder.lastWriteURL?.lastPathComponent == "model.json")
+            let p = try sut.filePath()
+            #expect(fileExists(p))
+            #expect(recorder.lastWriteURL?.lastPathComponent == "model.json")
+        }
     }
 
     @Test func savePropagatesCreateDirectoryFailure() {
@@ -83,21 +94,25 @@ struct FileServiceTests {
     }
 
     @Test func deleteIsNoOpWhenMissing() throws {
-        let sut = makeTestSUT(fileName: "gone.json")
-        try sut.delete()  // no throw
-        let p = try sut.filePath()
-        #expect(!fileExists(p))
+        try withTempDir { tempDir in
+            let sut = makeTestSUT(fileName: "gone.json", tempDir: tempDir)
+            try sut.delete()  // no throw
+            let p = try sut.filePath()
+            #expect(!fileExists(p))
+        }
     }
 
     @Test func deleteRemovesWhenPresent() throws {
-        let sut = makeTestSUT(fileName: "del.json")
+        try withTempDir { tempDir in
+            let sut = makeTestSUT(fileName: "del.json", tempDir: tempDir)
 
-        try sut.save(sampleModel())
-        let p = try sut.filePath()
-        #expect(fileExists(p))
+            try sut.save(sampleModel())
+            let p = try sut.filePath()
+            #expect(fileExists(p))
 
-        try sut.delete()
-        #expect(!fileExists(p))
+            try sut.delete()
+            #expect(!fileExists(p))
+        }
     }
 
     @Test func deleteMapsErrorWhenDirectoryProviderFails() {
@@ -113,7 +128,7 @@ struct FileServiceTests {
         let expectedPath = "/test/xdg-config"
         let provider = MockXDGDirectoryProvider(xdgPath: expectedPath)
         let base = try provider.baseDirectory()
-        
+
         #expect(normPath(base.path(percentEncoded: false)) == expectedPath)
     }
 
@@ -169,24 +184,25 @@ struct FileServiceTests {
     private func makeTestSUT(
         fileName: String = "test.json",
         fileManager: FileManagerProtocol = FileManager.default,
-        dataManager: DataManagerProtocol = DefaultDataManager()
+        dataManager: DataManagerProtocol = DefaultDataManager(),
+        tempDir: URL? = nil
     ) -> FileService<TestModel> {
         FileService<TestModel>(
             fileName: fileName,
             fileManager: fileManager,
             dataManager: dataManager,
-            directoryProvider: FixedDirectoryProvider(url: uniqueTempDir()),
+            directoryProvider: FixedDirectoryProvider(url: tempDir ?? uniqueTempDir()),
             errorMapper: { ConfigError.pathTraversalNotAllowed }
         )
     }
 
     private func makeTestSUTWithFile(
         fileName: String,
-        dataManager: DataManagerProtocol
+        dataManager: DataManagerProtocol,
+        tempDir: URL
     ) throws -> (FileService<TestModel>, URL) {
-        let base = uniqueTempDir()
         let path =
-            base
+            tempDir
             .appending(path: "outfitpicker", directoryHint: .isDirectory)
             .appending(path: fileName, directoryHint: .notDirectory)
 
@@ -203,7 +219,7 @@ struct FileServiceTests {
             fileName: fileName,
             fileManager: FileManager.default,
             dataManager: dataManager,
-            directoryProvider: FixedDirectoryProvider(url: base),
+            directoryProvider: FixedDirectoryProvider(url: tempDir),
             errorMapper: { ConfigError.pathTraversalNotAllowed }
         )
 
@@ -298,11 +314,11 @@ private final class FakeFileManagerNoAppSupport: FileManagerProtocol {
 
 private final class MockXDGDirectoryProvider: DirectoryProvider {
     let xdgPath: String
-    
+
     init(xdgPath: String) {
         self.xdgPath = xdgPath
     }
-    
+
     func baseDirectory() throws -> URL {
         return URL(filePath: xdgPath, directoryHint: .isDirectory)
     }
@@ -310,11 +326,11 @@ private final class MockXDGDirectoryProvider: DirectoryProvider {
 
 private final class MockNoXDGDirectoryProvider: DirectoryProvider {
     let fileManager: FileManagerProtocol
-    
+
     init(fileManager: FileManagerProtocol) {
         self.fileManager = fileManager
     }
-    
+
     func baseDirectory() throws -> URL {
         let urls = fileManager.urls(for: .applicationSupportDirectory, in: .userDomainMask)
         guard let appSupportURL = urls.first else {

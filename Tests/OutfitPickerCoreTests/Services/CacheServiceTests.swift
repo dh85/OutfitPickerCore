@@ -1,7 +1,8 @@
 import Foundation
-@testable import OutfitPickerCore
 import OutfitPickerTestSupport
 import Testing
+
+@testable import OutfitPickerCore
 
 struct CacheServiceTests {
 
@@ -9,24 +10,28 @@ struct CacheServiceTests {
 
     @Test
     func saveThenLoadRoundTrip() throws {
-        let (sut, _) = makeTestSetup()
-        let original = sampleCache()
+        try withTempDir { tempDir in
+            let sut = makeTestSetup(tempDir: tempDir)
+            let original = sampleCache()
 
-        try sut.save(original)
-        let loaded = try sut.load()
+            try sut.save(original)
+            let loaded = try sut.load()
 
-        #expect(loaded == original)
+            #expect(loaded == original)
+        }
     }
 
     // MARK: - Delete
 
     @Test
     func deleteRemovesFile() throws {
-        let (sut, path) = try makeTestSetupWithSavedCache()
-        #expect(fileExists(path))
+        try withTempDir { tempDir in
+            let (sut, path) = try makeTestSetupWithSavedCache(tempDir: tempDir)
+            #expect(fileExists(path))
 
-        try sut.delete()
-        #expect(!fileExists(path))
+            try sut.delete()
+            #expect(!fileExists(path))
+        }
     }
 
     @Test
@@ -41,11 +46,13 @@ struct CacheServiceTests {
 
     @Test
     func loadThrowsOnCorruptJSON() throws {
-        let (sut, _) = makeTestSetup()
-        try writeCorruptData(to: sut)
+        try withTempDir { tempDir in
+            let sut = makeTestSetup(tempDir: tempDir)
+            try writeCorruptData(to: sut)
 
-        #expect(throws: OutfitPickerError.fileSystemError) {
-            _ = try sut.load()
+            #expect(throws: OutfitPickerError.fileSystemError) {
+                _ = try sut.load()
+            }
         }
     }
 
@@ -53,23 +60,27 @@ struct CacheServiceTests {
 
     @Test
     func saveCreatesMissingDirectories() throws {
-        let (sut, _) = makeTestSetup()
+        try withTempDir { tempDir in
+            let sut = makeTestSetup(tempDir: tempDir)
 
-        try sut.save(OutfitCache())
-        let path = try sut.cachePath()
-        #expect(fileExists(path))
+            try sut.save(OutfitCache())
+            let path = try sut.cachePath()
+            #expect(fileExists(path))
+        }
     }
 
     // MARK: - Write errors
 
     @Test
-    func writeFailureSurfaces() {
-        let sut = CacheService(
-            dataManager: ThrowingDataManager(),
-            directoryProvider: FixedDirectoryProvider(url: uniqueTempDir())
-        )
-        #expect(throws: Error.self) {
-            try sut.save(OutfitCache())
+    func writeFailureSurfaces() throws {
+        withTempDir { tempDir in
+            let sut = CacheService(
+                dataManager: ThrowingDataManager(),
+                directoryProvider: FixedDirectoryProvider(url: tempDir)
+            )
+            #expect(throws: Error.self) {
+                try sut.save(OutfitCache())
+            }
         }
     }
 
@@ -87,27 +98,27 @@ struct CacheServiceTests {
 
     @Test
     func loadReturnsDefaultWhenCacheFileIsMissing() throws {
-        let (sut, _) = makeTestSetup()
-        let cache = try sut.load()
+        try withTempDir { tempDir in
+            let sut = makeTestSetup(tempDir: tempDir)
+            let cache = try sut.load()
 
-        #expect(cache.categories.isEmpty)
-        #expect(cache.version == 1)
-        #expect(cache.createdAt <= Date())
-        #expect(!fileExists(try sut.cachePath()))
+            #expect(cache.categories.isEmpty)
+            #expect(cache.version == 1)
+            #expect(cache.createdAt <= Date())
+            #expect(!fileExists(try sut.cachePath()))
+        }
     }
 
     // MARK: - Helpers
 
-    private func makeTestSetup() -> (CacheService, URL) {
-        let base = uniqueTempDir()
-        let sut = CacheService(
-            directoryProvider: FixedDirectoryProvider(url: base)
+    private func makeTestSetup(tempDir: URL) -> CacheService {
+        CacheService(
+            directoryProvider: FixedDirectoryProvider(url: tempDir)
         )
-        return (sut, base)
     }
 
-    private func makeTestSetupWithSavedCache() throws -> (CacheService, URL) {
-        let (sut, _) = makeTestSetup()
+    private func makeTestSetupWithSavedCache(tempDir: URL) throws -> (CacheService, URL) {
+        let sut = makeTestSetup(tempDir: tempDir)
         try sut.save(OutfitCache())
         let path = try sut.cachePath()
         return (sut, path)

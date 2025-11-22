@@ -1,11 +1,13 @@
-import Testing
 import Foundation
+import Testing
+
 @testable import OutfitPickerCore
 @testable import OutfitPickerTestSupport
 
 @Test func randomOutfitResultWrapping() async {
     // Given - config service that throws
-    let failingConfigService = FakeConfigService(.throwsError(OutfitPickerError.configurationNotFound))
+    let failingConfigService = FakeConfigService(
+        .throwsError(OutfitPickerError.configurationNotFound))
     let fakeCacheService = FakeCacheService(.ok(OutfitCache()))
     let fakeFileManager = FakeFileManager(.ok([:]))
     let picker = OutfitPicker(
@@ -13,10 +15,10 @@ import Foundation
         cacheService: fakeCacheService,
         fileManager: fakeFileManager
     )
-    
+
     // When
     let result = await picker.randomOutfit(from: "casual")
-    
+
     // Then - error is properly wrapped in Result
     switch result {
     case .success:
@@ -37,10 +39,10 @@ import Foundation
         cacheService: fakeCacheService,
         fileManager: fakeFileManager
     )
-    
+
     // When
     let result = await picker.randomOutfit(from: "")
-    
+
     // Then
     switch result {
     case .success:
@@ -52,7 +54,8 @@ import Foundation
 
 @Test func wearOutfitResultWrapping() async {
     // Given - config service that throws
-    let failingConfigService = FakeConfigService(.throwsError(OutfitPickerError.configurationNotFound))
+    let failingConfigService = FakeConfigService(
+        .throwsError(OutfitPickerError.configurationNotFound))
     let fakeCacheService = FakeCacheService(.ok(OutfitCache()))
     let fakeFileManager = FakeFileManager(.ok([:]))
     let picker = OutfitPicker(
@@ -60,11 +63,12 @@ import Foundation
         cacheService: fakeCacheService,
         fileManager: fakeFileManager
     )
-    let outfit = OutfitReference(fileName: "test.avatar", category: CategoryReference(name: "casual", path: "/test/casual"))
-    
+    let outfit = OutfitReference(
+        fileName: "test.avatar", category: CategoryReference(name: "casual", path: "/test/casual"))
+
     // When
     let result = await picker.wear(outfit)
-    
+
     // Then - error is properly wrapped in Result
     switch result {
     case .success:
@@ -85,11 +89,12 @@ import Foundation
         cacheService: fakeCacheService,
         fileManager: fakeFileManager
     )
-    let outfit = OutfitReference(fileName: "", category: CategoryReference(name: "casual", path: "/test/casual"))
-    
+    let outfit = OutfitReference(
+        fileName: "", category: CategoryReference(name: "casual", path: "/test/casual"))
+
     // When
     let result = await picker.wear(outfit)
-    
+
     // Then
     switch result {
     case .success:
@@ -101,7 +106,8 @@ import Foundation
 
 @Test func availableCategoriesResultWrapping() async {
     // Given - config service that throws
-    let failingConfigService = FakeConfigService(.throwsError(OutfitPickerError.configurationNotFound))
+    let failingConfigService = FakeConfigService(
+        .throwsError(OutfitPickerError.configurationNotFound))
     let fakeCacheService = FakeCacheService(.ok(OutfitCache()))
     let fakeFileManager = FakeFileManager(.ok([:]))
     let picker = OutfitPicker(
@@ -109,10 +115,10 @@ import Foundation
         cacheService: fakeCacheService,
         fileManager: fakeFileManager
     )
-    
+
     // When
     let result = await picker.availableCategories()
-    
+
     // Then - error is properly wrapped in Result
     switch result {
     case .success:
@@ -127,16 +133,17 @@ import Foundation
     let config = try! Config(root: "/test/outfits")
     let fakeConfigService = FakeConfigService(.ok(config))
     let fakeCacheService = FakeCacheService(.ok(OutfitCache()))
-    let emptyFileManager = FakeFileManager(.ok([URL(filePath: "/test/outfits"): []]), directories: [URL(filePath: "/test/outfits")])
+    let emptyFileManager = FakeFileManager(
+        .ok([URL(filePath: "/test/outfits"): []]), directories: [URL(filePath: "/test/outfits")])
     let picker = OutfitPicker(
         configService: fakeConfigService,
         cacheService: fakeCacheService,
         fileManager: emptyFileManager
     )
-    
+
     // When
     let result = await picker.availableCategories()
-    
+
     // Then
     switch result {
     case .success(let categories):
@@ -148,7 +155,8 @@ import Foundation
 
 @Test func resetCategoryResultWrapping() async {
     // Given - config service that throws
-    let failingConfigService = FakeConfigService(.throwsError(OutfitPickerError.configurationNotFound))
+    let failingConfigService = FakeConfigService(
+        .throwsError(OutfitPickerError.configurationNotFound))
     let fakeCacheService = FakeCacheService(.ok(OutfitCache()))
     let fakeFileManager = FakeFileManager(.ok([:]))
     let picker = OutfitPicker(
@@ -156,10 +164,10 @@ import Foundation
         cacheService: fakeCacheService,
         fileManager: fakeFileManager
     )
-    
+
     // When
     let result = await picker.reset(category: "casual")
-    
+
     // Then - error is properly wrapped in Result
     switch result {
     case .success:
@@ -180,10 +188,10 @@ import Foundation
         cacheService: fakeCacheService,
         fileManager: fakeFileManager
     )
-    
+
     // When
     let result = await picker.reset(category: "")
-    
+
     // Then
     switch result {
     case .success:
@@ -205,10 +213,10 @@ import Foundation
         cacheService: fakeCacheService,
         fileManager: failingFileManager
     )
-    
+
     // When
     let result = await picker.randomOutfit(from: "casual")
-    
+
     // Then
     switch result {
     case .success:
@@ -230,10 +238,10 @@ import Foundation
         cacheService: fakeCacheService,
         fileManager: fakeFileManager
     )
-    
+
     // When
     let result = await picker.randomOutfit(from: "test")
-    
+
     // Then - method returns Result type
     switch result {
     case .success(let outfit):
@@ -255,11 +263,12 @@ import Foundation
         cacheService: fakeCacheService,
         fileManager: fakeFileManager
     )
-    let outfit = OutfitReference(fileName: "test.avatar", category: CategoryReference(name: "test", path: "/test"))
-    
+    let outfit = OutfitReference(
+        fileName: "test.avatar", category: CategoryReference(name: "test", path: "/test"))
+
     // When
     let result = await picker.wear(outfit)
-    
+
     // Then - method returns Result type
     switch result {
     case .success:
@@ -274,16 +283,17 @@ import Foundation
     let config = try! Config(root: "/test")
     let fakeConfigService = FakeConfigService(.ok(config))
     let fakeCacheService = FakeCacheService(.ok(OutfitCache()))
-    let fakeFileManager = FakeFileManager(.ok([URL(filePath: "/test"): []]), directories: [URL(filePath: "/test")])
+    let fakeFileManager = FakeFileManager(
+        .ok([URL(filePath: "/test"): []]), directories: [URL(filePath: "/test")])
     let picker = OutfitPicker(
         configService: fakeConfigService,
         cacheService: fakeCacheService,
         fileManager: fakeFileManager
     )
-    
+
     // When
     let result = await picker.availableCategories()
-    
+
     // Then - method returns Result type
     switch result {
     case .success(let categories):
@@ -304,10 +314,10 @@ import Foundation
         cacheService: fakeCacheService,
         fileManager: fakeFileManager
     )
-    
+
     // When
     let result = await picker.reset(category: "test")
-    
+
     // Then - method returns Result type
     switch result {
     case .success:
@@ -323,22 +333,22 @@ import Foundation
     let categoryName = "casual"
     let fileName = "shirt.avatar"
     let safeRoot = "/Users/test/Outfits"
-    
+
     let env = try makeSingleCategorySUT(
         root: safeRoot,
         category: categoryName,
-        files: [fileName]
+        files: [fileName, "pants.avatar"]  // 2 outfits so wearing 1 doesn't complete rotation
     )
-    
+
     let outfit = makeOutfitReference(
         root: safeRoot,
         category: categoryName,
         fileName: fileName
     )
-    
+
     // When
     let result = await env.sut.wear(outfit)
-    
+
     // Then - should succeed
     switch result {
     case .success:

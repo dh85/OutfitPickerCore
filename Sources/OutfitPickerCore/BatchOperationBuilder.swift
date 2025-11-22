@@ -16,11 +16,11 @@ public struct BatchOperationBuilder: Sendable {
     private let picker: OutfitPicker
     private var outfitsToWear: [OutfitReference] = []
     private var categoriesToReset: [String] = []
-    
+
     internal init(picker: OutfitPicker) {
         self.picker = picker
     }
-    
+
     /// Adds outfits to be marked as worn.
     @discardableResult
     public func wear(_ outfits: OutfitReference...) -> BatchOperationBuilder {
@@ -28,7 +28,7 @@ public struct BatchOperationBuilder: Sendable {
         builder.outfitsToWear.append(contentsOf: outfits)
         return builder
     }
-    
+
     /// Adds outfits to be marked as worn from an array.
     @discardableResult
     public func wear(_ outfits: [OutfitReference]) -> BatchOperationBuilder {
@@ -36,7 +36,7 @@ public struct BatchOperationBuilder: Sendable {
         builder.outfitsToWear.append(contentsOf: outfits)
         return builder
     }
-    
+
     /// Adds categories to be reset.
     @discardableResult
     public func reset(_ categories: String...) -> BatchOperationBuilder {
@@ -44,7 +44,7 @@ public struct BatchOperationBuilder: Sendable {
         builder.categoriesToReset.append(contentsOf: categories)
         return builder
     }
-    
+
     /// Adds categories to be reset from an array of strings.
     @discardableResult
     public func resetCategories(_ categories: [String]) -> BatchOperationBuilder {
@@ -52,7 +52,7 @@ public struct BatchOperationBuilder: Sendable {
         builder.categoriesToReset.append(contentsOf: categories)
         return builder
     }
-    
+
     /// Adds CategoryReference instances to be reset.
     @discardableResult
     public func reset(_ categories: [CategoryReference]) -> BatchOperationBuilder {
@@ -60,24 +60,24 @@ public struct BatchOperationBuilder: Sendable {
         builder.categoriesToReset.append(contentsOf: categories.map { $0.name })
         return builder
     }
-    
+
     /// Executes all batched operations.
     /// - Returns: Summary of operations performed
     /// - Throws: `OutfitPickerError` if any operation fails
     public func execute() async throws -> BatchOperationResult {
         var wornCount = 0
         var resetCount = 0
-        
+
         if !outfitsToWear.isEmpty {
             try await picker.wearOutfits(outfitsToWear)
             wornCount = outfitsToWear.count
         }
-        
+
         if !categoriesToReset.isEmpty {
             try await picker.resetCategories(categoriesToReset)
             resetCount = categoriesToReset.count
         }
-        
+
         return BatchOperationResult(
             outfitsWorn: wornCount,
             categoriesReset: resetCount
@@ -91,12 +91,12 @@ public struct BatchOperationResult {
     public let outfitsWorn: Int
     /// Number of categories reset
     public let categoriesReset: Int
-    
+
     /// Total number of operations performed
     public var totalOperations: Int {
         outfitsWorn + categoriesReset
     }
-    
+
     /// Human-readable summary of operations
     public var summary: String {
         var parts: [String] = []
@@ -121,7 +121,7 @@ extension OutfitPicker {
     ///     .wear(outfit1, outfit2, outfit3)
     ///     .reset("summer", "vacation")
     ///     .execute()
-    /// 
+    ///
     /// print(result.summary) // "3 outfits worn, 2 categories reset"
     /// ```
     public func batch() -> BatchOperationBuilder {

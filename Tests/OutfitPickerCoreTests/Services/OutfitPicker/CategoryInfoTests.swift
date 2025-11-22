@@ -1,7 +1,8 @@
 import Foundation
-@testable import OutfitPickerCore
 import OutfitPickerTestSupport
 import Testing
+
+@testable import OutfitPickerCore
 
 @Suite
 struct CategoryInfoTests {
@@ -22,15 +23,16 @@ struct CategoryInfoTests {
             ),
             cacheService: FakeCacheService(.ok(OutfitCache())),
             fileManager: FakeFileManager(
-                .ok(makeFS(
-                    root: root,
-                    categories: [
-                        "D_HasOutfits": ["d1.avatar", "d2.avatar"],
-                        "A_Empty": [],
-                        "C_NoAvatar": ["readme.txt", "photo.png"],
-                        "B_Excluded": ["b.avatar"],
-                    ]
-                ).contents),
+                .ok(
+                    makeFS(
+                        root: root,
+                        categories: [
+                            "D_HasOutfits": ["d1.avatar", "d2.avatar"],
+                            "A_Empty": [],
+                            "C_NoAvatar": ["readme.txt", "photo.png"],
+                            "B_Excluded": ["b.avatar"],
+                        ]
+                    ).contents),
                 directories: [
                     URL(filePath: root, directoryHint: .isDirectory),
                     URL(filePath: "\(root)/D_HasOutfits", directoryHint: .isDirectory),

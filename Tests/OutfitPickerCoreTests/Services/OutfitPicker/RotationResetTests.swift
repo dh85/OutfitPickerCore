@@ -1,7 +1,8 @@
 import Foundation
-@testable import OutfitPickerCore
 import OutfitPickerTestSupport
 import Testing
+
+@testable import OutfitPickerCore
 
 @Suite
 struct RotationResetTests {
@@ -29,7 +30,7 @@ struct RotationResetTests {
         #expect(env.cache.saved.count == 1)
         let saved = try #require(env.cache.saved.first)
 
-        #expect(saved.categories["Casual"] == nil) // Category removed from cache
+        #expect(saved.categories["Casual"] == nil)  // Category removed from cache
 
         let club = try #require(saved.categories["Club"])
         #expect(club.totalOutfits == 3)
@@ -39,7 +40,7 @@ struct RotationResetTests {
     @Test
     func resetCategory_configLoadFailure_mapsToInvalidConfiguration() async {
         let sut = makeOutfitPickerSUTWithConfigError(ConfigError.missingRoot)
-        
+
         do {
             try await sut.resetCategory("Any")
             Issue.record("Expected invalidConfiguration when config load fails.")
@@ -53,7 +54,7 @@ struct RotationResetTests {
         let sut = try makeOutfitPickerSUTWithCacheError(
             CacheError.decodingFailed
         )
-        
+
         do {
             try await sut.resetCategory("Casual")
             Issue.record("Expected cacheError when cache load fails.")
@@ -84,7 +85,7 @@ struct RotationResetTests {
         let sut = makeOutfitPickerSUTWithConfigError(
             ConfigError.pathTraversalNotAllowed
         )
-        
+
         do {
             try await sut.resetAllCategories()
             Issue.record("Expected invalidConfiguration when config load fails.")
@@ -164,7 +165,7 @@ struct RotationResetTests {
 
     @Test func partialReset_configLoadFailure_mapsToInvalidConfiguration() async {
         let sut = makeOutfitPickerSUTWithConfigError(ConfigError.missingRoot)
-        
+
         do {
             try await sut.partialReset(categoryName: "Any", wornCount: 1)
             Issue.record("Expected invalidConfiguration when config load fails.")

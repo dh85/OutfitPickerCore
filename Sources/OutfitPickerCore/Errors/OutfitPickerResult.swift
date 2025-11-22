@@ -19,6 +19,8 @@ public enum OutfitPickerError: Error, LocalizedError, Equatable {
     case invalidConfiguration
     /// User provided invalid input parameters.
     case invalidInput(String)
+    /// All outfits in the category have been worn and the rotation has been reset.
+    case rotationCompleted(category: String)
 
     public var errorDescription: String? {
         switch self {
@@ -29,6 +31,7 @@ public enum OutfitPickerError: Error, LocalizedError, Equatable {
         case .cacheError: "Cache error"
         case .invalidConfiguration: "Invalid configuration"
         case .invalidInput(let message): "Invalid input: \(message)"
+        case .rotationCompleted(let category): "All outfits in '\(category)' have been worn. Category has been reset."
         }
     }
 }
