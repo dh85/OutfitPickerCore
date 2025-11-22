@@ -49,7 +49,8 @@ public protocol OutfitPickerProtocol: Sendable {
     ///     print("Today's work outfit: \(outfit.fileName)")
     /// }
     /// ```
-    func showRandomOutfit(from categoryName: String) async throws -> OutfitReference?
+    func showRandomOutfit(from categoryName: String) async throws
+        -> OutfitReference?
 
     /// Selects a random unworn outfit from any available category.
     ///
@@ -66,6 +67,60 @@ public protocol OutfitPickerProtocol: Sendable {
     /// }
     /// ```
     func showRandomOutfitAcrossCategories() async throws -> OutfitReference?
+
+    /// Shows all outfits that have been worn at least once, grouped by category.
+    ///
+    /// Use this to inspect which outfits you've already worn, for example to
+    /// review your history or debug rotation logic. Categories with no worn
+    /// outfits are omitted from the result.
+    ///
+    /// The returned dictionary uses the category name as the key and an array of
+    /// outfit file names as the value.
+    ///
+    /// - Returns: A dictionary of category names mapped to arrays of worn outfit
+    ///   file names. Categories with no worn outfits are not included.
+    /// - Throws: `OutfitPickerError` if the cache cannot be loaded or decoded.
+    ///
+    /// ## Example
+    /// ```swift
+    /// let wornByCategory = try await picker.showAllWornOutfits()
+    ///
+    /// for (category, outfits) in wornByCategory {
+    ///     print("Worn in \(category):")
+    ///     for fileName in outfits {
+    ///         print("  • \(fileName)")
+    ///     }
+    /// }
+    /// ```
+    func showAllWornOutfits() async throws -> [String: [String]]
+
+    /// Shows all outfits that have not been worn yet, grouped by category.
+    ///
+    /// Useful for discovering unworn outfits across your wardrobe or for building
+    /// "only-new" rotations. Categories in which every outfit has been worn are
+    /// omitted from the result.
+    ///
+    /// The returned dictionary uses the category name as the key and an array of
+    /// unworn outfit file names as the value.
+    ///
+    /// - Returns: A dictionary of category names mapped to arrays of unworn outfit
+    ///   file names. Categories where all outfits have been worn are not included.
+    /// - Throws: `OutfitPickerError` if the cache cannot be loaded or decoded, or
+    ///   file-system errors if avatar directories cannot be read.
+    ///
+    /// ## Example
+    /// ```swift
+    /// let unwornByCategory = try await picker.showAllUnwornOutfit()
+    ///
+    /// for (category, outfits) in unwornByCategory {
+    ///     print("Still unworn in \(category):")
+    ///     for fileName in outfits {
+    ///         print("  • \(fileName)")
+    ///     }
+    /// }
+    /// ```
+    ///
+    func showAllUnwornOutfits() async throws -> [String: [String]]
 
     /// Marks an outfit as worn, adding it to the rotation tracking.
     ///
@@ -196,7 +251,8 @@ public protocol OutfitPickerProtocol: Sendable {
     /// print("Casual wardrobe (\(outfits.count) items):")
     /// outfits.forEach { print("- \($0.fileName)") }
     /// ```
-    func showAllOutfits(from categoryName: String) async throws -> [OutfitReference]
+    func showAllOutfits(from categoryName: String) async throws
+        -> [OutfitReference]
 
     /// Detects changes in the filesystem compared to stored configuration.
     ///
@@ -306,7 +362,8 @@ public protocol OutfitPickerProtocol: Sendable {
     ///   - categoryName: Name of the category to search in
     /// - Returns: `true` if the outfit exists, `false` otherwise
     /// - Throws: `OutfitPickerError.categoryNotFound` if category doesn't exist
-    func outfitExists(_ fileName: String, in categoryName: String) async throws -> Bool
+    func outfitExists(_ fileName: String, in categoryName: String) async throws
+        -> Bool
 
     /// Checks if a specific outfit has been worn in the current rotation.
     ///
@@ -316,7 +373,8 @@ public protocol OutfitPickerProtocol: Sendable {
     ///   - fileName: Name of the outfit file to check
     ///   - categoryName: Name of the category containing the outfit
     /// - Returns: `true` if the outfit has been worn, `false` otherwise
-    func isOutfitWorn(_ fileName: String, in categoryName: String) async throws -> Bool
+    func isOutfitWorn(_ fileName: String, in categoryName: String) async throws
+        -> Bool
 
     /// Gets a specific outfit reference by name.
     ///
@@ -327,7 +385,8 @@ public protocol OutfitPickerProtocol: Sendable {
     ///   - categoryName: Name of the category containing the outfit
     /// - Returns: OutfitReference if found, `nil` if outfit doesn't exist
     /// - Throws: `OutfitPickerError.categoryNotFound` if category doesn't exist
-    func getOutfit(_ fileName: String, from categoryName: String) async throws -> OutfitReference?
+    func getOutfit(_ fileName: String, from categoryName: String) async throws
+        -> OutfitReference?
 
     /// Gets the rotation progress for a category as (worn, total) counts.
     ///
@@ -337,7 +396,9 @@ public protocol OutfitPickerProtocol: Sendable {
     /// - Parameter categoryName: Name of the category to check
     /// - Returns: Tuple with worn count and total count
     /// - Throws: `OutfitPickerError.categoryNotFound` if category doesn't exist
-    func getRotationProgress(for categoryName: String) async throws -> (worn: Int, total: Int)
+    func getRotationProgress(for categoryName: String) async throws -> (
+        worn: Int, total: Int
+    )
 
     /// Gets the rotation progress for a category as a percentage (0.0 to 1.0).
     ///
@@ -346,14 +407,16 @@ public protocol OutfitPickerProtocol: Sendable {
     /// - Parameter categoryName: Name of the category to check
     /// - Returns: Progress as a decimal between 0.0 and 1.0
     /// - Throws: `OutfitPickerError.categoryNotFound` if category doesn't exist
-    func getRotationProgressPercentage(for categoryName: String) async throws -> Double
+    func getRotationProgressPercentage(for categoryName: String) async throws
+        -> Double
 
     // MARK: - Type-Safe CategoryReference Overloads
 
     /// Type-safe version of showRandomOutfit(from:) using CategoryReference.
     ///
     /// Eliminates typos and provides compile-time safety for category names.
-    func showRandomOutfit(from category: CategoryReference) async throws -> OutfitReference?
+    func showRandomOutfit(from category: CategoryReference) async throws
+        -> OutfitReference?
 
     /// Type-safe version of getAvailableCount(for:) using CategoryReference.
     func getAvailableCount(for category: CategoryReference) async throws -> Int
@@ -365,10 +428,13 @@ public protocol OutfitPickerProtocol: Sendable {
     func partialReset(category: CategoryReference, wornCount: Int) async throws
 
     /// Type-safe version of showAllOutfits(from:) using CategoryReference.
-    func showAllOutfits(from category: CategoryReference) async throws -> [OutfitReference]
+    func showAllOutfits(from category: CategoryReference) async throws
+        -> [OutfitReference]
 
     /// Type-safe version of getRotationProgress(for:) using CategoryReference.
-    func getRotationProgress(for category: CategoryReference) async throws -> (worn: Int, total: Int)
+    func getRotationProgress(for category: CategoryReference) async throws -> (
+        worn: Int, total: Int
+    )
 }
 
 /// Protocol abstracting FileManager operations for testability.
@@ -448,36 +514,57 @@ public actor OutfitPicker: OutfitPickerProtocol, @unchecked Sendable {
 
     // MARK: - Core Operations
 
-    public func showRandomOutfit(from categoryName: String) async throws -> OutfitReference? {
-        guard !categoryName.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else {
-            throw OutfitPickerError.invalidInput("Category name cannot be empty")
+    public func showRandomOutfit(from categoryName: String) async throws
+        -> OutfitReference?
+    {
+        guard
+            !categoryName.trimmingCharacters(in: .whitespacesAndNewlines)
+                .isEmpty
+        else {
+            throw OutfitPickerError.invalidInput(
+                "Category name cannot be empty"
+            )
         }
 
         do {
             let config = try configService.load()
-            let categoryPath = URL(filePath: config.root, directoryHint: .isDirectory)
-                .appending(path: categoryName, directoryHint: .isDirectory)
-                .path(percentEncoded: false)
+            let categoryPath = URL(
+                filePath: config.root,
+                directoryHint: .isDirectory
+            )
+            .appending(path: categoryName, directoryHint: .isDirectory)
+            .path(percentEncoded: false)
 
             let files = try getAvatarFiles(in: categoryPath)
             guard !files.isEmpty else { return nil }
 
             let cache = try cacheService.load()
             let categoryCache =
-                cache.categories[categoryName] ?? CategoryCache(totalOutfits: files.count)
+                cache.categories[categoryName]
+                ?? CategoryCache(totalOutfits: files.count)
 
             let pool: [FileEntry]
             if categoryCache.wornOutfits.count >= files.count {
                 let reset = CategoryCache(totalOutfits: files.count)
-                try cacheService.save(cache.updating(category: categoryName, with: reset))
+                try cacheService.save(
+                    cache.updating(category: categoryName, with: reset)
+                )
                 pool = files
             } else {
-                pool = files.filter { !categoryCache.wornOutfits.contains($0.fileName) }
+                pool = files.filter {
+                    !categoryCache.wornOutfits.contains($0.fileName)
+                }
             }
 
             let file = pool.randomElement()!
-            let categoryRef = CategoryReference(name: categoryName, path: categoryPath)
-            return OutfitReference(fileName: file.fileName, category: categoryRef)
+            let categoryRef = CategoryReference(
+                name: categoryName,
+                path: categoryPath
+            )
+            return OutfitReference(
+                fileName: file.fileName,
+                category: categoryRef
+            )
         } catch let error as OutfitPickerError {
             throw error
         } catch {
@@ -485,7 +572,9 @@ public actor OutfitPicker: OutfitPickerProtocol, @unchecked Sendable {
         }
     }
 
-    public func showRandomOutfitAcrossCategories() async throws -> OutfitReference? {
+    public func showRandomOutfitAcrossCategories() async throws
+        -> OutfitReference?
+    {
         do {
             let config = try configService.load()
             let categoryInfos = try getCategoryInfo(config: config)
@@ -495,63 +584,121 @@ public actor OutfitPicker: OutfitPickerProtocol, @unchecked Sendable {
             for info in categoryInfos {
                 guard case .hasOutfits = info.state else { continue }
 
-                let categoryPath = URL(filePath: config.root, directoryHint: .isDirectory)
-                    .appending(path: info.category.name, directoryHint: .isDirectory)
-                    .path(percentEncoded: false)
+                let categoryPath = URL(
+                    filePath: config.root,
+                    directoryHint: .isDirectory
+                )
+                .appending(
+                    path: info.category.name,
+                    directoryHint: .isDirectory
+                )
+                .path(percentEncoded: false)
 
                 let files = try getAvatarFiles(in: categoryPath)
                 guard !files.isEmpty else { continue }
 
                 let cache = try cacheService.load()
                 let categoryCache =
-                    cache.categories[info.category.name] ?? CategoryCache(totalOutfits: files.count)
+                    cache.categories[info.category.name]
+                    ?? CategoryCache(totalOutfits: files.count)
                 let availableFiles = files.filter {
                     !categoryCache.wornOutfits.contains($0.fileName)
                 }
 
                 if !availableFiles.isEmpty {
-                    availableCategories.append((info.category.name, categoryPath, availableFiles))
+                    availableCategories.append(
+                        (info.category.name, categoryPath, availableFiles)
+                    )
                 }
             }
 
             guard !availableCategories.isEmpty else { return nil }
 
-            let (categoryName, categoryPath, files) = availableCategories.randomElement()!
+            let (categoryName, categoryPath, files) =
+                availableCategories.randomElement()!
             let file = files.randomElement()!
-            let categoryRef = CategoryReference(name: categoryName, path: categoryPath)
-            return OutfitReference(fileName: file.fileName, category: categoryRef)
+            let categoryRef = CategoryReference(
+                name: categoryName,
+                path: categoryPath
+            )
+            return OutfitReference(
+                fileName: file.fileName,
+                category: categoryRef
+            )
         } catch {
             throw OutfitPickerError.from(error)
         }
     }
 
-    public func wearOutfit(_ outfit: OutfitReference) async throws {
-        guard !outfit.fileName.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else {
-            throw OutfitPickerError.invalidInput("Outfit filename cannot be empty")
+    public func showAllWornOutfits() async throws -> [String: [String]] {
+        try cacheService.load().categories.compactMapValues { category in
+            guard !category.wornOutfits.isEmpty else {
+                return nil
+            }
+            return category.wornOutfits.sorted()
         }
-        guard !outfit.category.name.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else {
-            throw OutfitPickerError.invalidInput("Category name cannot be empty")
+    }
+
+    public func showAllUnwornOutfits() async throws -> [String: [String]] {
+        try cacheService.load().categories.compactMap {
+            categoryName,
+            categoryCache in
+            let allFiles = try getAvatarFiles(in: categoryName).map(\.fileName)
+            let unworn = allFiles.filter {
+                !categoryCache.wornOutfits.contains($0)
+            }
+            return unworn.isEmpty ? nil : (categoryName, unworn.sorted())
+        }
+        .reduce(into: [:]) { result, element in
+            result[element.0] = element.1
+        }
+    }
+
+    public func wearOutfit(_ outfit: OutfitReference) async throws {
+        guard
+            !outfit.fileName.trimmingCharacters(in: .whitespacesAndNewlines)
+                .isEmpty
+        else {
+            throw OutfitPickerError.invalidInput(
+                "Outfit filename cannot be empty"
+            )
+        }
+        guard
+            !outfit.category.name.trimmingCharacters(
+                in: .whitespacesAndNewlines
+            ).isEmpty
+        else {
+            throw OutfitPickerError.invalidInput(
+                "Category name cannot be empty"
+            )
         }
 
         do {
             let config = try configService.load()
-            let categoryPath = URL(filePath: config.root, directoryHint: .isDirectory)
-                .appending(path: outfit.category.name, directoryHint: .isDirectory)
-                .path(percentEncoded: false)
+            let categoryPath = URL(
+                filePath: config.root,
+                directoryHint: .isDirectory
+            )
+            .appending(path: outfit.category.name, directoryHint: .isDirectory)
+            .path(percentEncoded: false)
 
             let files = try getAvatarFiles(in: categoryPath)
-            guard files.contains(where: { $0.fileName == outfit.fileName }) else {
+            guard files.contains(where: { $0.fileName == outfit.fileName })
+            else {
                 throw OutfitPickerError.noOutfitsAvailable
             }
 
             let cache = try cacheService.load()
             var categoryCache =
-                cache.categories[outfit.category.name] ?? CategoryCache(totalOutfits: files.count)
+                cache.categories[outfit.category.name]
+                ?? CategoryCache(totalOutfits: files.count)
 
             if !categoryCache.wornOutfits.contains(outfit.fileName) {
                 categoryCache = categoryCache.adding(outfit.fileName)
                 let updatedOutfitCache = cache.updating(
-                    category: outfit.category.name, with: categoryCache)
+                    category: outfit.category.name,
+                    with: categoryCache
+                )
                 try cacheService.save(updatedOutfitCache)
             }
         } catch let error as OutfitPickerError {
@@ -586,24 +733,37 @@ public actor OutfitPicker: OutfitPickerProtocol, @unchecked Sendable {
         }
     }
 
-    public func getAvailableCount(for categoryName: String) async throws -> Int {
-        guard !categoryName.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else {
-            throw OutfitPickerError.invalidInput("Category name cannot be empty")
+    public func getAvailableCount(for categoryName: String) async throws -> Int
+    {
+        guard
+            !categoryName.trimmingCharacters(in: .whitespacesAndNewlines)
+                .isEmpty
+        else {
+            throw OutfitPickerError.invalidInput(
+                "Category name cannot be empty"
+            )
         }
 
         do {
             let config = try configService.load()
-            let categoryPath = URL(filePath: config.root, directoryHint: .isDirectory)
-                .appending(path: categoryName, directoryHint: .isDirectory)
-                .path(percentEncoded: false)
+            let categoryPath = URL(
+                filePath: config.root,
+                directoryHint: .isDirectory
+            )
+            .appending(path: categoryName, directoryHint: .isDirectory)
+            .path(percentEncoded: false)
 
             let files = try getAvatarFiles(in: categoryPath)
             let cache = try cacheService.load()
             let categoryCache =
-                cache.categories[categoryName] ?? CategoryCache(totalOutfits: files.count)
+                cache.categories[categoryName]
+                ?? CategoryCache(totalOutfits: files.count)
 
-            let availableFiles = files.filter { !categoryCache.wornOutfits.contains($0.fileName) }
-            return categoryCache.isRotationComplete ? files.count : availableFiles.count
+            let availableFiles = files.filter {
+                !categoryCache.wornOutfits.contains($0.fileName)
+            }
+            return categoryCache.isRotationComplete
+                ? files.count : availableFiles.count
         } catch let error as OutfitPickerError {
             throw error
         } catch {
@@ -612,8 +772,13 @@ public actor OutfitPicker: OutfitPickerProtocol, @unchecked Sendable {
     }
 
     public func resetCategory(_ categoryName: String) async throws {
-        guard !categoryName.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else {
-            throw OutfitPickerError.invalidInput("Category name cannot be empty")
+        guard
+            !categoryName.trimmingCharacters(in: .whitespacesAndNewlines)
+                .isEmpty
+        else {
+            throw OutfitPickerError.invalidInput(
+                "Category name cannot be empty"
+            )
         }
 
         do {
@@ -637,40 +802,60 @@ public actor OutfitPicker: OutfitPickerProtocol, @unchecked Sendable {
         }
     }
 
-    public func partialReset(categoryName: String, wornCount: Int) async throws {
+    public func partialReset(categoryName: String, wornCount: Int) async throws
+    {
         do {
             let config = try configService.load()
-            let categoryPath = URL(filePath: config.root, directoryHint: .isDirectory)
-                .appending(path: categoryName, directoryHint: .isDirectory)
-                .path(percentEncoded: false)
+            let categoryPath = URL(
+                filePath: config.root,
+                directoryHint: .isDirectory
+            )
+            .appending(path: categoryName, directoryHint: .isDirectory)
+            .path(percentEncoded: false)
 
             let files = try getAvatarFiles(in: categoryPath)
             guard wornCount < files.count else { return }
 
             let cache = try cacheService.load()
             let categoryCache =
-                cache.categories[categoryName] ?? CategoryCache(totalOutfits: files.count)
+                cache.categories[categoryName]
+                ?? CategoryCache(totalOutfits: files.count)
 
             let wornOutfits = Array(categoryCache.wornOutfits.prefix(wornCount))
             let updatedCache = CategoryCache(
-                wornOutfits: Set(wornOutfits), totalOutfits: files.count)
-            let updatedOutfitCache = cache.updating(category: categoryName, with: updatedCache)
+                wornOutfits: Set(wornOutfits),
+                totalOutfits: files.count
+            )
+            let updatedOutfitCache = cache.updating(
+                category: categoryName,
+                with: updatedCache
+            )
             try cacheService.save(updatedOutfitCache)
         } catch {
             throw OutfitPickerError.from(error)
         }
     }
 
-    public func showAllOutfits(from categoryName: String) async throws -> [OutfitReference] {
+    public func showAllOutfits(from categoryName: String) async throws
+        -> [OutfitReference]
+    {
         do {
             let config = try configService.load()
-            let categoryPath = URL(filePath: config.root, directoryHint: .isDirectory)
-                .appending(path: categoryName, directoryHint: .isDirectory)
-                .path(percentEncoded: false)
+            let categoryPath = URL(
+                filePath: config.root,
+                directoryHint: .isDirectory
+            )
+            .appending(path: categoryName, directoryHint: .isDirectory)
+            .path(percentEncoded: false)
 
             let files = try getAvatarFiles(in: categoryPath)
-            let categoryRef = CategoryReference(name: categoryName, path: categoryPath)
-            return files.map { OutfitReference(fileName: $0.fileName, category: categoryRef) }
+            let categoryRef = CategoryReference(
+                name: categoryName,
+                path: categoryPath
+            )
+            return files.map {
+                OutfitReference(fileName: $0.fileName, category: categoryRef)
+            }
         } catch {
             throw OutfitPickerError.from(error)
         }
@@ -688,7 +873,10 @@ public actor OutfitPicker: OutfitPickerProtocol, @unchecked Sendable {
     public func updateConfig(with changes: CategoryChanges) async throws {
         do {
             let config = try configService.load()
-            let updatedConfig = try createUpdatedConfig(from: config, with: changes)
+            let updatedConfig = try createUpdatedConfig(
+                from: config,
+                with: changes
+            )
             try configService.save(updatedConfig)
 
             if !changes.deletedCategories.isEmpty {
@@ -710,12 +898,22 @@ public actor OutfitPicker: OutfitPickerProtocol, @unchecked Sendable {
         }
 
         for outfit in outfits {
-            guard !outfit.fileName.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else {
-                throw OutfitPickerError.invalidInput("Outfit filename cannot be empty")
-            }
-            guard !outfit.category.name.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+            guard
+                !outfit.fileName.trimmingCharacters(in: .whitespacesAndNewlines)
+                    .isEmpty
             else {
-                throw OutfitPickerError.invalidInput("Category name cannot be empty")
+                throw OutfitPickerError.invalidInput(
+                    "Outfit filename cannot be empty"
+                )
+            }
+            guard
+                !outfit.category.name.trimmingCharacters(
+                    in: .whitespacesAndNewlines
+                ).isEmpty
+            else {
+                throw OutfitPickerError.invalidInput(
+                    "Category name cannot be empty"
+                )
             }
         }
 
@@ -724,12 +922,19 @@ public actor OutfitPicker: OutfitPickerProtocol, @unchecked Sendable {
             var cache = try cacheService.load()
 
             for outfit in outfits {
-                let categoryPath = URL(filePath: config.root, directoryHint: .isDirectory)
-                    .appending(path: outfit.category.name, directoryHint: .isDirectory)
-                    .path(percentEncoded: false)
+                let categoryPath = URL(
+                    filePath: config.root,
+                    directoryHint: .isDirectory
+                )
+                .appending(
+                    path: outfit.category.name,
+                    directoryHint: .isDirectory
+                )
+                .path(percentEncoded: false)
 
                 let files = try getAvatarFiles(in: categoryPath)
-                guard files.contains(where: { $0.fileName == outfit.fileName }) else {
+                guard files.contains(where: { $0.fileName == outfit.fileName })
+                else {
                     throw OutfitPickerError.noOutfitsAvailable
                 }
 
@@ -739,7 +944,10 @@ public actor OutfitPicker: OutfitPickerProtocol, @unchecked Sendable {
 
                 if !categoryCache.wornOutfits.contains(outfit.fileName) {
                     categoryCache = categoryCache.adding(outfit.fileName)
-                    cache = cache.updating(category: outfit.category.name, with: categoryCache)
+                    cache = cache.updating(
+                        category: outfit.category.name,
+                        with: categoryCache
+                    )
                 }
             }
 
@@ -758,8 +966,13 @@ public actor OutfitPicker: OutfitPickerProtocol, @unchecked Sendable {
         }
 
         for categoryName in categoryNames {
-            guard !categoryName.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else {
-                throw OutfitPickerError.invalidInput("Category name cannot be empty")
+            guard
+                !categoryName.trimmingCharacters(in: .whitespacesAndNewlines)
+                    .isEmpty
+            else {
+                throw OutfitPickerError.invalidInput(
+                    "Category name cannot be empty"
+                )
             }
         }
 
@@ -779,9 +992,13 @@ public actor OutfitPicker: OutfitPickerProtocol, @unchecked Sendable {
         }
     }
 
-    public func searchOutfits(pattern: String) async throws -> [OutfitReference] {
-        guard !pattern.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else {
-            throw OutfitPickerError.invalidInput("Search pattern cannot be empty")
+    public func searchOutfits(pattern: String) async throws -> [OutfitReference]
+    {
+        guard !pattern.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+        else {
+            throw OutfitPickerError.invalidInput(
+                "Search pattern cannot be empty"
+            )
         }
 
         do {
@@ -792,12 +1009,21 @@ public actor OutfitPicker: OutfitPickerProtocol, @unchecked Sendable {
             for info in categoryInfos {
                 guard case .hasOutfits = info.state else { continue }
 
-                let categoryPath = URL(filePath: config.root, directoryHint: .isDirectory)
-                    .appending(path: info.category.name, directoryHint: .isDirectory)
-                    .path(percentEncoded: false)
+                let categoryPath = URL(
+                    filePath: config.root,
+                    directoryHint: .isDirectory
+                )
+                .appending(
+                    path: info.category.name,
+                    directoryHint: .isDirectory
+                )
+                .path(percentEncoded: false)
 
                 let files = try getAvatarFiles(in: categoryPath)
-                let categoryRef = CategoryReference(name: info.category.name, path: categoryPath)
+                let categoryRef = CategoryReference(
+                    name: info.category.name,
+                    path: categoryPath
+                )
 
                 let matchingFiles = files.filter { file in
                     file.fileName.localizedCaseInsensitiveContains(pattern)
@@ -805,8 +1031,12 @@ public actor OutfitPicker: OutfitPickerProtocol, @unchecked Sendable {
 
                 results.append(
                     contentsOf: matchingFiles.map {
-                        OutfitReference(fileName: $0.fileName, category: categoryRef)
-                    })
+                        OutfitReference(
+                            fileName: $0.fileName,
+                            category: categoryRef
+                        )
+                    }
+                )
             }
 
             return results.sorted { $0.fileName < $1.fileName }
@@ -817,9 +1047,14 @@ public actor OutfitPicker: OutfitPickerProtocol, @unchecked Sendable {
         }
     }
 
-    public func filterCategories(pattern: String) async throws -> [CategoryReference] {
-        guard !pattern.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else {
-            throw OutfitPickerError.invalidInput("Filter pattern cannot be empty")
+    public func filterCategories(pattern: String) async throws
+        -> [CategoryReference]
+    {
+        guard !pattern.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+        else {
+            throw OutfitPickerError.invalidInput(
+                "Filter pattern cannot be empty"
+            )
         }
 
         do {
@@ -837,13 +1072,17 @@ public actor OutfitPicker: OutfitPickerProtocol, @unchecked Sendable {
     // MARK: - Convenience Methods
 
     /// Checks if a specific outfit exists in a category.
-    public func outfitExists(_ fileName: String, in categoryName: String) async throws -> Bool {
+    public func outfitExists(_ fileName: String, in categoryName: String)
+        async throws -> Bool
+    {
         let outfits = try await showAllOutfits(from: categoryName)
         return outfits.contains { $0.fileName == fileName }
     }
 
     /// Checks if a specific outfit has been worn.
-    public func isOutfitWorn(_ fileName: String, in categoryName: String) async throws -> Bool {
+    public func isOutfitWorn(_ fileName: String, in categoryName: String)
+        async throws -> Bool
+    {
         do {
             let cache = try cacheService.load()
             let categoryCache = cache.categories[categoryName]
@@ -854,7 +1093,8 @@ public actor OutfitPicker: OutfitPickerProtocol, @unchecked Sendable {
     }
 
     /// Gets a specific outfit reference by name.
-    public func getOutfit(_ fileName: String, from categoryName: String) async throws
+    public func getOutfit(_ fileName: String, from categoryName: String)
+        async throws
         -> OutfitReference?
     {
         let outfits = try await showAllOutfits(from: categoryName)
@@ -862,7 +1102,9 @@ public actor OutfitPicker: OutfitPickerProtocol, @unchecked Sendable {
     }
 
     /// Gets the rotation progress for a category as (worn, total) counts.
-    public func getRotationProgress(for categoryName: String) async throws -> (worn: Int, total: Int) {
+    public func getRotationProgress(for categoryName: String) async throws -> (
+        worn: Int, total: Int
+    ) {
         let available = try await getAvailableCount(for: categoryName)
         let total = try await showAllOutfits(from: categoryName).count
         let worn = total - available
@@ -870,7 +1112,9 @@ public actor OutfitPicker: OutfitPickerProtocol, @unchecked Sendable {
     }
 
     /// Gets the rotation progress for a category (0.0 to 1.0).
-    public func getRotationProgressPercentage(for categoryName: String) async throws -> Double {
+    public func getRotationProgressPercentage(for categoryName: String)
+        async throws -> Double
+    {
         let (worn, total) = try await getRotationProgress(for: categoryName)
         guard total > 0 else { return 1.0 }
         return Double(worn) / Double(total)
@@ -878,13 +1122,19 @@ public actor OutfitPicker: OutfitPickerProtocol, @unchecked Sendable {
 
     // MARK: - Private Helper Methods
 
-    private func getAvatarFiles(in directoryPath: String) throws -> [FileEntry] {
+    private func getAvatarFiles(in directoryPath: String) throws -> [FileEntry]
+    {
         let url = URL(filePath: directoryPath, directoryHint: .isDirectory)
         let contents = try fileManager.contentsOfDirectory(
-            at: url, includingPropertiesForKeys: nil, options: [])
+            at: url,
+            includingPropertiesForKeys: nil,
+            options: []
+        )
 
         return contents.compactMap { fileURL in
-            guard !fileURL.hasDirectoryPath, fileURL.pathExtension.lowercased() == "avatar" else {
+            guard !fileURL.hasDirectoryPath,
+                fileURL.pathExtension.lowercased() == "avatar"
+            else {
                 return nil
             }
             return FileEntry(filePath: fileURL.path(percentEncoded: false))
@@ -894,7 +1144,10 @@ public actor OutfitPicker: OutfitPickerProtocol, @unchecked Sendable {
     private func getCategoryInfo(config: Config) throws -> [CategoryInfo] {
         let rootURL = URL(filePath: config.root, directoryHint: .isDirectory)
         let contents = try fileManager.contentsOfDirectory(
-            at: rootURL, includingPropertiesForKeys: nil, options: [])
+            at: rootURL,
+            includingPropertiesForKeys: nil,
+            options: []
+        )
 
         var categoryInfos = [CategoryInfo]()
 
@@ -902,22 +1155,35 @@ public actor OutfitPicker: OutfitPickerProtocol, @unchecked Sendable {
             var isDirectory: ObjCBool = false
             guard
                 fileManager.fileExists(
-                    atPath: url.path(percentEncoded: false), isDirectory: &isDirectory),
+                    atPath: url.path(percentEncoded: false),
+                    isDirectory: &isDirectory
+                ),
                 isDirectory.boolValue
             else { continue }
 
             let categoryName = url.lastPathComponent
             let categoryPath = url.path(percentEncoded: false)
-            let categoryRef = CategoryReference(name: categoryName, path: categoryPath)
+            let categoryRef = CategoryReference(
+                name: categoryName,
+                path: categoryPath
+            )
 
             if config.excludedCategories.contains(categoryName) {
-                categoryInfos.append(CategoryInfo(category: categoryRef, state: .userExcluded, outfitCount: 0))
+                categoryInfos.append(
+                    CategoryInfo(
+                        category: categoryRef,
+                        state: .userExcluded,
+                        outfitCount: 0
+                    )
+                )
                 continue
             }
 
             let avatarFiles = try getAvatarFiles(in: categoryPath)
             let allFiles = try fileManager.contentsOfDirectory(
-                at: url, includingPropertiesForKeys: nil, options: []
+                at: url,
+                includingPropertiesForKeys: nil,
+                options: []
             )
             .filter { !$0.hasDirectoryPath }
 
@@ -928,7 +1194,13 @@ public actor OutfitPicker: OutfitPickerProtocol, @unchecked Sendable {
                 state = .hasOutfits
             }
 
-            categoryInfos.append(CategoryInfo(category: categoryRef, state: state, outfitCount: avatarFiles.count))
+            categoryInfos.append(
+                CategoryInfo(
+                    category: categoryRef,
+                    state: state,
+                    outfitCount: avatarFiles.count
+                )
+            )
         }
 
         return categoryInfos.sorted { $0.category.name < $1.category.name }
@@ -940,7 +1212,9 @@ public actor OutfitPicker: OutfitPickerProtocol, @unchecked Sendable {
         var currentCategoryFiles = [String: Set<String>]()
         for info in currentCategoryInfos {
             let avatarFiles = try getAvatarFiles(in: info.category.path)
-            currentCategoryFiles[info.category.name] = Set(avatarFiles.map(\.fileName))
+            currentCategoryFiles[info.category.name] = Set(
+                avatarFiles.map(\.fileName)
+            )
         }
 
         let previousCategoryFiles = config.knownCategoryFiles
@@ -954,14 +1228,20 @@ public actor OutfitPicker: OutfitPickerProtocol, @unchecked Sendable {
 
         let currentCategoryNames = Set(currentCategoryFiles.keys)
 
-        let newCategories = currentCategoryNames.subtracting(previousCategoryNames)
-        let deletedCategories = previousCategoryNames.subtracting(currentCategoryNames)
+        let newCategories = currentCategoryNames.subtracting(
+            previousCategoryNames
+        )
+        let deletedCategories = previousCategoryNames.subtracting(
+            currentCategoryNames
+        )
 
         var changedCategories = Set<String>()
         var addedFiles = [String: Set<String>]()
         var deletedFiles = [String: Set<String>]()
 
-        let commonCategories = currentCategoryNames.intersection(previousCategoryNames)
+        let commonCategories = currentCategoryNames.intersection(
+            previousCategoryNames
+        )
 
         for category in commonCategories {
             let previousFiles = previousCategoryFiles[category] ?? []
@@ -990,16 +1270,23 @@ public actor OutfitPicker: OutfitPickerProtocol, @unchecked Sendable {
         )
     }
 
-    private func createUpdatedConfig(from config: Config, with changes: CategoryChanges) throws
+    private func createUpdatedConfig(
+        from config: Config,
+        with changes: CategoryChanges
+    ) throws
         -> Config
     {
         let currentCategoryInfos = try getCategoryInfo(config: config)
-        let updatedKnownCategories = Set(currentCategoryInfos.map { $0.category.name })
+        let updatedKnownCategories = Set(
+            currentCategoryInfos.map { $0.category.name }
+        )
 
         var updatedKnownCategoryFiles: [String: Set<String>] = [:]
         for info in currentCategoryInfos {
             let avatarFiles = try getAvatarFiles(in: info.category.path)
-            updatedKnownCategoryFiles[info.category.name] = Set(avatarFiles.map(\.fileName))
+            updatedKnownCategoryFiles[info.category.name] = Set(
+                avatarFiles.map(\.fileName)
+            )
         }
 
         return try Config(
@@ -1015,11 +1302,15 @@ public actor OutfitPicker: OutfitPickerProtocol, @unchecked Sendable {
 // MARK: - Type-Safe CategoryReference Default Implementations
 
 extension OutfitPickerProtocol {
-    public func showRandomOutfit(from category: CategoryReference) async throws -> OutfitReference? {
+    public func showRandomOutfit(from category: CategoryReference) async throws
+        -> OutfitReference?
+    {
         return try await showRandomOutfit(from: category.name)
     }
 
-    public func getAvailableCount(for category: CategoryReference) async throws -> Int {
+    public func getAvailableCount(for category: CategoryReference) async throws
+        -> Int
+    {
         return try await getAvailableCount(for: category.name)
     }
 
@@ -1027,15 +1318,24 @@ extension OutfitPickerProtocol {
         try await resetCategory(category.name)
     }
 
-    public func partialReset(category: CategoryReference, wornCount: Int) async throws {
-        try await partialReset(categoryName: category.name, wornCount: wornCount)
+    public func partialReset(category: CategoryReference, wornCount: Int)
+        async throws
+    {
+        try await partialReset(
+            categoryName: category.name,
+            wornCount: wornCount
+        )
     }
 
-    public func showAllOutfits(from category: CategoryReference) async throws -> [OutfitReference] {
+    public func showAllOutfits(from category: CategoryReference) async throws
+        -> [OutfitReference]
+    {
         return try await showAllOutfits(from: category.name)
     }
 
-    public func getRotationProgress(for category: CategoryReference) async throws -> (worn: Int, total: Int) {
+    public func getRotationProgress(for category: CategoryReference)
+        async throws -> (worn: Int, total: Int)
+    {
         return try await getRotationProgress(for: category.name)
     }
 }
